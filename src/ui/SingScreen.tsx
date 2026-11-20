@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { guideGainFor, rmsGateForSensitivity } from '../audio/mix.ts'
 import { useGuideMelody } from '../audio/useGuideMelody.ts'
 import { useSongPlayback } from '../audio/useSongPlayback.ts'
@@ -26,6 +26,14 @@ import { MixSlider } from './MixSlider.tsx'
 import { NoteHighway } from './NoteHighway.tsx'
 import { useGameSession, type SessionOptions } from './useGameSession.ts'
 import { Waveform } from './Waveform.tsx'
+import { YouTubeMiniPlayer } from './YouTubeMiniPlayer.tsx'
+import {
+  clampOffsetMs,
+  persistSongOffset,
+  readSongOffset,
+  songOffsetKey,
+} from '../youtube/offsets.ts'
+import { useYouTubePlayer } from '../youtube/useYouTubePlayer.ts'
 
 type SingScreenProps = {
   song: ParsedSong
@@ -42,6 +50,9 @@ type SingScreenProps = {
   onMicSensitivity: (value: number) => void
   onExit: () => void
   onFinished: (result: RoundResult) => void
+  youtubeId: string | undefined
+  youtubeFromHeader?: boolean
+  youtubeMock?: boolean
 }
 
 export function SingScreen({
@@ -59,16 +70,45 @@ export function SingScreen({
   onMicSensitivity,
   onExit,
   onFinished,
+  youtubeId,
+  youtubeFromHeader = false,
+  youtubeMock = false,
 }: SingScreenProps) {
   const { t } = useI18n()
   const minRms = rmsGateForSensitivity(micSensitivity)
   const mic = usePitchDetection(micSensitivity)
   const needMic = !options.simulated
   const live = needMic && mic.status === 'listening' ? mic.live : undefined
-  const playback = useSongPlayback(audioUrl)
+  const useYoutube = Boolean(youtubeId) || youtubeMock
+  const offsetKey = useMemo(
+    () =>
+      songOffsetKey({
+        videoId: youtubeId ?? 'mock',
+        title: song.headers.title,
+        artist: song.headers.artist,
+      }),
+    [song.headers.artist, song.headers.title, youtubeId],
+  )
+  const [offsetMs, setOffsetMs] = useState(() =>
+    readSongOffset(
+      offsetKey,
+      typeof window === 'undefined' ? undefined : window.localStorage,
+      0,
+    ),
+  )
+  const youtube = useYouTubePlayer({
+    videoId: youtubeId,
+    mock: youtubeMock,
+    offsetMs,
+    enabled: useYoutube,
+    startMs: options.seekMs,
+  })
+  const playback = useSongPlayback(useYoutube ? undefined : audioUrl)
+  const getMediaClock = useCallback(() => (useYoutube ? youtube.readClock() : undefined), [useYoutube, youtube])
   const sessionOptions: SessionOptions = {
     ...options,
-    getMediaTimeMs: playback.currentTimeMs,
+    getMediaTimeMs: useYoutube ? undefined : playback.currentTimeMs,
+    getMediaClock: useYoutube ? getMediaClock : undefined,
     minRms,
   }
   const session = useGameSession(song, sessionOptions, live)
@@ -78,12 +118,23 @@ export function SingScreen({
     timeline,
     timeMs,
     status === 'playing' && !guideMuted,
-    guideGainFor(guideVolume, Boolean(audioUrl), guideMuted),
+    guideGainFor(guideVolume, Boolean(audioUrl) || useYoutube, guideMuted),
   )
 
   useEffect(() => {
     playback.sync(timeMs, status === 'playing')
   }, [playback, status, timeMs])
+
+  const countingIn = timeMs < 0
+  useEffect(() => {
+    if (!useYoutube) return
+    if (countingIn) {
+      youtube.pause()
+      return
+    }
+    if (status === 'playing') void youtube.play()
+    else youtube.pause()
+  }, [countingIn, status, useYoutube, youtube])
 
   const micRef = useRef(mic)
   useEffect(() => {
@@ -119,6 +170,16 @@ export function SingScreen({
   const countdown = inCountIn ? Math.max(1, Math.ceil(-timeMs / 1000)) : 0
   const score = Math.round(snapshot.total)
 
+  function changeOffset(next: number) {
+    const clamped = clampOffsetMs(next)
+    setOffsetMs(clamped)
+    persistSongOffset(
+      offsetKey,
+      clamped,
+      typeof window === 'undefined' ? undefined : window.localStorage,
+    )
+  }
+
   const hitting = activeNotes(timeline, timeMs).some((note) => {
     if (note.type === 'freestyle') return false
     if (options.simulated) return true
@@ -138,7 +199,7 @@ export function SingScreen({
   const accuracyPct = Math.round(snapshot.accuracy * 100)
 
   return (
-    <div className="sing">
+    <div className={useYoutube ? 'sing sing-with-yt' : 'sing'}>
       {visual.waveform ? (
         <div className="spectrum" aria-hidden="true">
           <Waveform analyser={playback.analyser} active={status === 'playing'} />
@@ -291,6 +352,19 @@ export function SingScreen({
           </span>
         </div>
       </section>
+      {useYoutube ? (
+        <YouTubeMiniPlayer
+          player={youtube}
+          hostRef={youtube.hostRef}
+          title={`${song.headers.artist} — ${song.headers.title}`}
+          fromHeader={youtubeFromHeader}
+          offsetMs={offsetMs}
+          onOffsetChange={changeOffset}
+          onSeekSong={(ms) => session.setTime(Math.max(0, ms))}
+          onUserPlay={session.resume}
+          onUserPause={session.pause}
+        />
+      ) : null}
     </div>
   )
 }

@@ -1,3 +1,4 @@
+import { youtubeSourceFromRawHeaders } from '../youtube/ids.ts'
 import {
   UltraStarParseError,
   type LyricLine,
@@ -377,7 +378,8 @@ export function parseUltraStar(text: string): ParsedSong {
   }
 
   const audioFile = raw.AUDIO || raw.MP3
-  if (!audioFile) {
+  const youtube = youtubeSourceFromRawHeaders(raw)
+  if (!audioFile && !youtube) {
     warnings.push({
       lineNumber: 1,
       message: 'Missing #MP3 or #AUDIO header; playback will not be available',
@@ -425,6 +427,8 @@ export function parseUltraStar(text: string): ParsedSong {
     language: raw.LANGUAGE,
     cover: raw.COVER,
     video: raw.VIDEO,
+    youtubeId: youtube?.id,
+    youtubeKind: youtube?.kind,
     background: raw.BACKGROUND,
     voiceNames,
     raw,

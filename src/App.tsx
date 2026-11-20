@@ -10,6 +10,7 @@ import {
 } from './game/index.ts'
 import { useI18n } from './i18n/index.ts'
 import { loadBuiltinSongs, type LoadedSong } from './library/index.ts'
+import { parseYouTubeUrl } from './youtube/ids.ts'
 import { ResultsScreen } from './ui/ResultsScreen.tsx'
 import { SingScreen } from './ui/SingScreen.tsx'
 import { LibraryScreen } from './ui/LibraryScreen.tsx'
@@ -27,11 +28,13 @@ type PlayFlags = {
   seekMs: number | undefined
   skipToResults: boolean
   autoplay: boolean
+  ytMock: boolean
+  ytId: string | undefined
 }
 
 function readPlayFlags(): PlayFlags {
   if (typeof window === 'undefined') {
-    return { sim: false, seekMs: undefined, skipToResults: false, autoplay: false }
+    return { sim: false, seekMs: undefined, skipToResults: false, autoplay: false, ytMock: false, ytId: undefined }
   }
   const params = new URLSearchParams(window.location.search)
   const sim = params.get('sim') === '1' || params.get('sim') === 'true'
@@ -40,7 +43,9 @@ function readPlayFlags(): PlayFlags {
   const seekMs = Number.isFinite(parsedSeek) ? parsedSeek : undefined
   const skipToResults = params.get('screen') === 'results'
   const autoplay = params.get('autoplay') === '1' || skipToResults || seekMs !== undefined
-  return { sim, seekMs, skipToResults, autoplay }
+  const ytMock = params.get('ytmock') === '1' || params.get('ytmock') === 'true'
+  const ytId = parseYouTubeUrl(params.get('yt') ?? '')
+  return { sim, seekMs, skipToResults, autoplay, ytMock, ytId }
 }
 
 function perfectSimResult(song: LoadedSong['song']): RoundResult {
@@ -67,8 +72,21 @@ export default function App() {
   const [seekMs, setSeekMs] = useState(flags.seekMs)
   const [guideMuted, setGuideMuted] = useState(false)
   const mix = useAudioMix()
+  const [youtubeOverrides, setYoutubeOverrides] = useState<Record<string, string>>({})
   const songs = useMemo(() => [...builtin, ...userSongs], [builtin, userSongs])
-  const selected = songs.find((song) => song.id === selectedId) ?? songs[0]
+  const selectedBase = songs.find((song) => song.id === selectedId) ?? songs[0]
+  const selected = selectedBase
+    ? {
+        ...selectedBase,
+        youtubeId:
+          youtubeOverrides[selectedBase.id] ??
+          flags.ytId ??
+          selectedBase.youtubeId,
+        youtubeFromHeader: youtubeOverrides[selectedBase.id] || flags.ytId
+          ? false
+          : selectedBase.youtubeFromHeader,
+      }
+    : undefined
   const [result, setResult] = useState<RoundResult | undefined>(() =>
     flags.skipToResults && builtin[0] ? perfectSimResult(builtin[0].song) : undefined,
   )
@@ -84,16 +102,25 @@ export default function App() {
   }, [t])
 
   const startSinging = useCallback(() => {
-    if (!selected) return
+    if (!selectedBase) return
     prepareForSong()
     setSeekMs(undefined)
     setResult(undefined)
     setView('sing')
-  }, [selected, prepareForSong])
+  }, [selectedBase, prepareForSong])
 
   const onSingFinished = useCallback((next: RoundResult) => {
     setResult(next)
     setView('results')
+  }, [])
+
+  const onYouTubeSource = useCallback((songId: string, videoId: string | undefined) => {
+    setYoutubeOverrides((current) => {
+      const next = { ...current }
+      if (videoId) next[songId] = videoId
+      else delete next[songId]
+      return next
+    })
   }, [])
 
   const onAddSongs = useCallback((incoming: LoadedSong[]) => {
@@ -120,8 +147,11 @@ export default function App() {
         <SingScreen
           song={selected.song}
           audioUrl={selected.audioUrl}
-          audioMissing={selected.audioMissing}
+          audioMissing={selected.audioMissing && !selected.youtubeId && !flags.ytMock}
           options={sessionOptions}
+          youtubeId={selected.youtubeId}
+          youtubeFromHeader={selected.youtubeFromHeader}
+          youtubeMock={flags.ytMock}
           guideMuted={guideMuted}
           guideVolume={mix.guideVolume}
           micSensitivity={mix.micSensitivity}
@@ -175,6 +205,7 @@ export default function App() {
         micSensitivity={mix.micSensitivity}
         onGuideVolume={mix.setGuideVolume}
         onMicSensitivity={mix.setMicSensitivity}
+        onYouTubeSource={onYouTubeSource}
       />
     </>
   )

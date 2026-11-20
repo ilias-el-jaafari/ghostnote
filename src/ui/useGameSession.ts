@@ -17,6 +17,7 @@ import type { ParsedSong } from '../parser/index.ts'
 import { DEFAULT_MIC_MIN_RMS } from '../audio/mix.ts'
 import { frequencyToMidi } from '../pitch/index.ts'
 import { type LivePitch } from '../pitch/usePitchDetection.ts'
+import type { MediaClockReading } from '../youtube/clock.ts'
 
 export type SessionStatus = 'playing' | 'paused' | 'ended'
 
@@ -40,6 +41,12 @@ export type SessionOptions = {
   seekMs?: number
   /** When the backing track is playing, prefer its currentTime as the game clock. */
   getMediaTimeMs?: () => number | undefined
+  /**
+   * YouTube (or other) media clock. When `running` is false the game clock
+   * freezes so buffering, pause, seek, and ads cannot desync the highway.
+   * Takes precedence over `getMediaTimeMs`.
+   */
+  getMediaClock?: () => MediaClockReading | undefined
   /** RMS gate for mic presence (rap notes). Comes from the sensitivity slider. */
   minRms?: number
 }
@@ -174,10 +181,16 @@ export function useGameSession(
     const loop = () => {
       let next = performance.now() - originRef.current
       if (next >= 0) {
-        const media = optionsRef.current.getMediaTimeMs?.()
-        if (media !== undefined && media >= 0) {
-          next = media
+        const clock = optionsRef.current.getMediaClock?.()
+        if (clock) {
+          next = Math.max(0, clock.timeMs)
           originRef.current = performance.now() - next
+        } else {
+          const media = optionsRef.current.getMediaTimeMs?.()
+          if (media !== undefined && media >= 0) {
+            next = media
+            originRef.current = performance.now() - next
+          }
         }
       }
       const previous = appliedUntilRef.current

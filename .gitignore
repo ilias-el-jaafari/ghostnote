@@ -34,3 +34,7 @@ screenshots/**/*.diff.png
 
 # Local visual references (not part of the published tree)
 design-refs/
+
+# Local UltraStar charts / audio for personal testing (never commit copyrighted files)
+/usdb/
+/local-songs/

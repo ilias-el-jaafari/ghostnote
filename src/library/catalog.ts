@@ -21,6 +21,10 @@ export type LoadedSong = {
   builtin: boolean
   /** True when `audioUrl` is an object URL that must be revoked on removal. */
   objectUrl: boolean
+  youtubeId: string | undefined
+  youtubeKind: 'video' | 'audio' | undefined
+  /** True when the YouTube id came from the chart `#VIDEO` / `#YOUTUBE` header. */
+  youtubeFromHeader: boolean
 }
 
 export const DEMO_CATALOG: CatalogEntry[] = [
@@ -55,6 +59,9 @@ export function loadCatalogEntry(entry: CatalogEntry): LoadedSong {
     audioMissing: false,
     builtin: true,
     objectUrl: false,
+    youtubeId: song.headers.youtubeId,
+    youtubeKind: song.headers.youtubeKind,
+    youtubeFromHeader: Boolean(song.headers.youtubeId),
   }
 }
 

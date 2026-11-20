@@ -28,6 +28,7 @@ The visual look — four switchable 2000s themes (Kaleido, Aqua Bubble, Neon Gal
 - Load your own `.txt` chart plus audio (multi-file or folder picker; works on mobile)
 - Live note highway, AnalyserNode spectrum HUD, and a guide melody (on by default, can be muted)
 - Four switchable 2000s visual themes, plus a “random each song” option (remembered in `localStorage`)
+- YouTube as a backing-track source (official IFrame Player, no downloading): paste a URL or auto-detect `#VIDEO:v=` / `a=` (USDB-style). A Winamp-like mini player keeps the video visible at 200×200 CSS pixels.
 - English / Spanish UI
 
 Party/phones-as-mics mode and the optional ghost verdict are planned, not shipped yet. See [`.kiro/specs/resurrection-karaoke/tasks.md`](.kiro/specs/resurrection-karaoke/tasks.md).
@@ -52,6 +53,8 @@ Useful query flags:
 - `&visual=high|medium|low|static` — force the visual quality tier
 - `&intro=0` — skip the wake-up intro
 - `&theme=kaleido|aqua|galaxy|laser|random` — lock the visual theme
+- `&yt=VIDEO_ID` — attach a YouTube video to the current song
+- `&ytmock=1` — show the mini player with a local mock (for screenshots / tests)
 
 ### Scripts
 

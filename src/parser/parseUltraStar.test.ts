@@ -210,6 +210,7 @@ E
     expect(parsed.headers.language).toBe('English')
     expect(parsed.headers.cover).toBe('cover.jpg')
     expect(parsed.headers.video).toBe('clip.mp4')
+    expect(parsed.headers.youtubeId).toBeUndefined()
     expect(parsed.headers.background).toBe('bg.jpg')
   })
 })

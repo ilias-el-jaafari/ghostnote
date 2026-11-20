@@ -21,6 +21,10 @@ export type SongHeaders = {
   language: string | undefined
   cover: string | undefined
   video: string | undefined
+  /** YouTube id from `#VIDEO` (`v=` / `a=` / URL) or `#YOUTUBE`, if any. */
+  youtubeId: string | undefined
+  /** `video` when the id came from `v=` or a URL; `audio` when it came from `a=`. */
+  youtubeKind: 'video' | 'audio' | undefined
   background: string | undefined
   /** Voice names from #P1/#P2 or #DUETSINGERP1/#DUETSINGERP2. */
   voiceNames: Record<number, string>

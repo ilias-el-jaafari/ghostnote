@@ -110,6 +110,19 @@ export const en = {
   'sing.guideVolume': 'Guide volume',
   'mic.sensitivity': 'Mic sensitivity',
   'mic.sensitivityHint': 'Raise this if the tuner only picks you up when you sing loudly.',
+  'youtube.player': 'YouTube player',
+  'youtube.play': 'Play',
+  'youtube.seek': 'Seek',
+  'youtube.offset': 'Offset',
+  'youtube.pasteUrl': 'YouTube URL',
+  'youtube.pasteHint': 'Paste a karaoke or instrumental YouTube link. The official player stays visible in a small 200×200 screen.',
+  'youtube.apply': 'Use this video',
+  'youtube.clear': 'Clear',
+  'youtube.invalidUrl': 'That does not look like a YouTube URL or video id.',
+  'youtube.fromHeader': 'YouTube id from the chart’s #VIDEO header. Offset starts at 0 because #GAP is already timed for this video.',
+  'youtube.usingId': 'Using YouTube {id}',
+  'youtube.tapToStart': 'Tap Play on the player to start the video (required on a phone).',
+  'youtube.badge': 'YouTube',
 } as const
 
 export type MessageKey = keyof typeof en

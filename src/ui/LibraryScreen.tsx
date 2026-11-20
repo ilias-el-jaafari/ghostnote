@@ -13,6 +13,7 @@ import { LanguageSwitcher } from './LanguageSwitcher.tsx'
 import { MicTest } from './MicTest.tsx'
 import { MixSlider } from './MixSlider.tsx'
 import { ThemePicker } from './ThemePicker.tsx'
+import { YouTubeUrlField } from './YouTubeUrlField.tsx'
 import type { ThemeId, ThemePreference } from '../visual/themes.ts'
 
 type LibraryScreenProps = {
@@ -34,6 +35,7 @@ type LibraryScreenProps = {
   micSensitivity: number
   onGuideVolume: (value: number) => void
   onMicSensitivity: (value: number) => void
+  onYouTubeSource: (songId: string, videoId: string | undefined) => void
 }
 
 function durationLabel(song: LoadedSong, template: (n: number) => string): string {
@@ -60,6 +62,7 @@ export function LibraryScreen({
   micSensitivity,
   onGuideVolume,
   onMicSensitivity,
+  onYouTubeSource,
 }: LibraryScreenProps) {
   const { t } = useI18n()
   const filesId = useId()
@@ -106,6 +109,9 @@ export function LibraryScreen({
           audioMissing: !audioUrl,
           builtin: false,
           objectUrl: Boolean(audioUrl),
+          youtubeId: song.headers.youtubeId,
+          youtubeKind: song.headers.youtubeKind,
+          youtubeFromHeader: Boolean(song.headers.youtubeId),
         })
       } catch (caught) {
         errors.push(describeParseError(caught))
@@ -233,6 +239,12 @@ export function LibraryScreen({
           <MicTest sensitivity={micSensitivity} onSensitivityChange={onMicSensitivity} />
           {selected ? (
             <div className="start-card hud-panel">
+              <YouTubeUrlField
+                videoId={selected.youtubeId}
+                fromHeader={selected.youtubeFromHeader}
+                onApply={(id) => onYouTubeSource(selected.id, id)}
+                onClear={() => onYouTubeSource(selected.id, undefined)}
+              />
               <MixSlider
                 label={t('sing.guideVolume')}
                 value={guideVolume}
@@ -287,7 +299,13 @@ function SongCard({
         <p>{song.song.headers.artist}</p>
         <p className="song-card-meta">
           <span>{duration}</span>
-          <span>{song.audioMissing ? t('home.noAudio') : t('home.audioReady')}</span>
+          <span>
+            {song.youtubeId
+              ? t('youtube.badge')
+              : song.audioMissing
+                ? t('home.noAudio')
+                : t('home.audioReady')}
+          </span>
         </p>
       </button>
       <button type="button" className="btn btn-primary btn-compact" onClick={onSing}>

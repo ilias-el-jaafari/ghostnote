@@ -1,0 +1,28 @@
+#TITLE:Midnight Echo
+#ARTIST:The Night Owls
+#BPM:120
+#GAP:0
+#MP3:midnight-echo.ogg
+#LANGUAGE:English
+#YEAR:2026
+#GENRE:Original
+#COMMENT:Original copyright-free demo written for WakeStar (Kiroween 2026). Not based on any existing song.
+: 0 4 0 Mid
+: 4 4 2 night
+: 8 8 4  e
+: 16 8 5 cho
+- 28
+: 32 4 0 Sing
+: 36 4 2  with
+: 40 4 4  the
+* 44 8 7  glow
+- 56
+: 64 4 0 Rise
+: 68 4 5  and
+: 72 8 7  shine
+- 84
+: 88 4 0 Mid
+: 92 4 2 night
+: 96 8 4  e
+* 104 12 0 cho
+E

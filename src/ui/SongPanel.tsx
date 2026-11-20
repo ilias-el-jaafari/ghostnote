@@ -1,0 +1,179 @@
+import type { ChangeEvent, DragEvent, FormEvent } from 'react'
+import { useId, useState } from 'react'
+import type { LyricLine, ParsedSong } from '../parser/index.ts'
+
+type SongPanelProps = {
+  song: ParsedSong | undefined
+  sourceName: string | undefined
+  error: string | undefined
+  onLoadText: (text: string, sourceName: string) => void
+  onLoadDemo: () => void
+}
+
+function voiceLabel(song: ParsedSong, voice: number): string {
+  return song.headers.voiceNames[voice] ?? `Voice ${voice}`
+}
+
+function LineView({ line, showVoice }: { line: LyricLine; showVoice: boolean }) {
+  return (
+    <p className="lyric-line">
+      {showVoice ? <span className="lyric-voice">P{line.voice}</span> : null}
+      {line.notes.map((note, index) => (
+        <span
+          key={`${note.startBeat}-${index}`}
+          className={`syllable syllable-${note.type}`}
+          title={`${note.type} · beat ${note.startBeat} · pitch ${note.pitch}`}
+        >
+          {note.text}
+        </span>
+      ))}
+    </p>
+  )
+}
+
+export function SongPanel({
+  song,
+  sourceName,
+  error,
+  onLoadText,
+  onLoadDemo,
+}: SongPanelProps) {
+  const inputId = useId()
+  const [dragOver, setDragOver] = useState(false)
+  const [readError, setReadError] = useState<string | undefined>(undefined)
+
+  const displayError = error ?? readError
+
+  async function loadFile(file: File | undefined) {
+    if (!file) return
+    setReadError(undefined)
+    try {
+      const text = await file.text()
+      onLoadText(text, file.name)
+    } catch (caught) {
+      setReadError(
+        caught instanceof Error ? caught.message : 'Could not read that file.',
+      )
+    }
+  }
+
+  function onPick(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    void loadFile(file)
+    event.target.value = ''
+  }
+
+  function onDrop(event: DragEvent<HTMLElement>) {
+    event.preventDefault()
+    setDragOver(false)
+    const file = event.dataTransfer.files[0]
+    void loadFile(file)
+  }
+
+  function onDragOver(event: DragEvent<HTMLElement>) {
+    event.preventDefault()
+    setDragOver(true)
+  }
+
+  function onSubmit(event: FormEvent) {
+    event.preventDefault()
+  }
+
+  return (
+    <section className="panel song-panel">
+      <header className="panel-header">
+        <h2>Song</h2>
+        {sourceName ? <p className="panel-kicker">{sourceName}</p> : null}
+      </header>
+
+      <form className="loader" onSubmit={onSubmit}>
+        <label
+          className={dragOver ? 'dropzone dropzone-active' : 'dropzone'}
+          htmlFor={inputId}
+          onDragOver={onDragOver}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={onDrop}
+        >
+          <input
+            id={inputId}
+            type="file"
+            accept=".txt,text/plain"
+            onChange={onPick}
+          />
+          <span className="dropzone-title">Load an UltraStar .txt file</span>
+          <span className="dropzone-hint">Tap to browse, or drop a file here.</span>
+        </label>
+        <button type="button" className="btn btn-ghost" onClick={onLoadDemo}>
+          Load demo song
+        </button>
+      </form>
+
+      {displayError ? (
+        <p className="banner banner-error" role="alert">
+          {displayError}
+        </p>
+      ) : null}
+
+      {song ? (
+        <div className="song-body">
+          <dl className="meta-grid">
+            <div>
+              <dt>Title</dt>
+              <dd>{song.headers.title}</dd>
+            </div>
+            <div>
+              <dt>Artist</dt>
+              <dd>{song.headers.artist}</dd>
+            </div>
+            <div>
+              <dt>BPM</dt>
+              <dd>{song.headers.bpm}</dd>
+            </div>
+            <div>
+              <dt>GAP</dt>
+              <dd>{song.headers.gap} ms</dd>
+            </div>
+            <div>
+              <dt>Audio</dt>
+              <dd>{song.headers.audioFile ?? '—'}</dd>
+            </div>
+            <div>
+              <dt>Voices</dt>
+              <dd>
+                {song.voices
+                  .map((voice) => voiceLabel(song, voice))
+                  .join(', ') || '1'}
+              </dd>
+            </div>
+          </dl>
+
+          {song.warnings.length > 0 ? (
+            <details className="warnings">
+              <summary>
+                {song.warnings.length} warning{song.warnings.length === 1 ? '' : 's'}
+              </summary>
+              <ul>
+                {song.warnings.map((warning, index) => (
+                  <li key={`${warning.lineNumber}-${index}`}>
+                    Line {warning.lineNumber}: {warning.message}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          ) : null}
+
+          <h3>Lyrics</h3>
+          <div className="lyrics">
+            {song.lines.map((line, index) => (
+              <LineView
+                key={`${line.voice}-${line.startBeat}-${index}`}
+                line={line}
+                showVoice={song.voices.length > 1}
+              />
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </section>
+  )
+}

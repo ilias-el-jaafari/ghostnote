@@ -11,6 +11,12 @@ function formatHz(frequency: number | null): string {
   return `${frequency.toFixed(1)} Hz`
 }
 
+function flagLabel(value: boolean | undefined, t: (key: 'mic.debugOn' | 'mic.debugOff' | 'mic.debugUnknown') => string) {
+  if (value === true) return t('mic.debugOn')
+  if (value === false) return t('mic.debugOff')
+  return t('mic.debugUnknown')
+}
+
 function statusKey(status: MicStatus, hasPitch: boolean) {
   switch (status) {
     case 'requesting':
@@ -48,8 +54,22 @@ type MicTestProps = {
 
 export function MicTest({ sensitivity, onSensitivityChange }: MicTestProps) {
   const { t } = useI18n()
-  const { status, errorCode, errorDetail, live, start, stop } = usePitchDetection(sensitivity)
+  const {
+    status,
+    errorCode,
+    errorDetail,
+    live,
+    start,
+    stop,
+    debugStatus,
+    debugRemainingMs,
+    debugBundle,
+    startDebugCapture,
+    downloadDebugCapture,
+    diagnostics,
+  } = usePitchDetection(sensitivity)
   const listening = status === 'listening'
+
   const level = Math.min(1, live.rms * 24)
   const cents = live.note?.cents ?? 0
   const needle = Math.max(-1, Math.min(1, cents / 50))
@@ -116,6 +136,75 @@ export function MicTest({ sensitivity, onSensitivityChange }: MicTestProps) {
           {status === 'requesting' ? t('mic.starting') : t('mic.start')}
         </button>
       )}
+
+
+      <div className="mic-debug">
+        <h3>{t('mic.debugCapture')}</h3>
+        <p className="mic-help">{t('mic.debugHint')}</p>
+        {diagnostics ? (
+          <div className="mic-settings">
+            <p className="mic-settings-title">{t('mic.debugSettings')}</p>
+            <dl>
+              <div>
+                <dt>echoCancellation</dt>
+                <dd>{flagLabel(diagnostics.settings.echoCancellation, t)}</dd>
+              </div>
+              <div>
+                <dt>noiseSuppression</dt>
+                <dd>{flagLabel(diagnostics.settings.noiseSuppression, t)}</dd>
+              </div>
+              <div>
+                <dt>autoGainControl</dt>
+                <dd>{flagLabel(diagnostics.settings.autoGainControl, t)}</dd>
+              </div>
+              <div>
+                <dt>{t('mic.debugContextRate')}</dt>
+                <dd>{diagnostics.contextSampleRate} Hz</dd>
+              </div>
+              <div>
+                <dt>{t('mic.debugTrackRate')}</dt>
+                <dd>
+                  {diagnostics.trackSampleRate
+                    ? `${diagnostics.trackSampleRate} Hz`
+                    : t('mic.debugUnknown')}
+                </dd>
+              </div>
+              <div>
+                <dt>{t('mic.debugFftSize')}</dt>
+                <dd>{diagnostics.fftSize}</dd>
+              </div>
+              <div>
+                <dt>{t('mic.debugLowCut')}</dt>
+                <dd>{diagnostics.lowCutHz} Hz</dd>
+              </div>
+            </dl>
+            {diagnostics.voiceProcessingOn ? (
+              <p className="banner banner-warn" role="status">
+                {t('mic.debugProcessingOn')}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+        {debugStatus === 'recording' ? (
+          <p className="yt-url-hint" role="status">
+            {t('mic.debugRecording', { n: Math.ceil(debugRemainingMs / 1000) })}
+          </p>
+        ) : (
+          <button
+            type="button"
+            className="btn btn-ghost"
+            onClick={() => void startDebugCapture()}
+            disabled={status === 'requesting'}
+          >
+            {t('mic.debugStart')}
+          </button>
+        )}
+        {debugBundle ? (
+          <button type="button" className="btn btn-primary btn-compact" onClick={() => void downloadDebugCapture()}>
+            {t('mic.debugDownload')}
+          </button>
+        ) : null}
+      </div>
     </section>
   )
 }

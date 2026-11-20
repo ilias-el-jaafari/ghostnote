@@ -25,7 +25,7 @@ export function songIdentityKey(artist: string, title: string): string {
 }
 
 export function instrumentalSearchQuery(artist: string, title: string): string {
-  return `${artist} ${title} karaoke instrumental`.replace(/\s+/g, ' ').trim()
+  return `${artist} ${title} instrumental`.replace(/\s+/g, ' ').trim()
 }
 
 export function instrumentalSearchUrl(artist: string, title: string): string {
@@ -141,4 +141,101 @@ export function defaultSource(input: {
   if (input.instrumentalId) return 'instrumental'
   if (!input.hasLocalAudio) return 'instrumental'
   return 'original'
+}
+
+
+export type PlaybackKind = 'instrumental' | 'original-file' | 'original-youtube' | 'none'
+
+/** What should actually play when the user hits Sing. Never a silent clock. */
+export type PlaybackPlan = {
+  kind: PlaybackKind
+  youtubeId: string | undefined
+  audioUrl: string | undefined
+  youtubeFromHeader: boolean
+  /** User asked for an instrumental, but none was resolved. */
+  fallbackToOriginal: boolean
+  /** Nothing to play — the start button must stay disabled. */
+  silent: boolean
+}
+
+/**
+ * Resolve the audio that will play. If instrumental mode has no video id,
+ * automatically fall back to the chart's original #VIDEO id (or the local
+ * file) so the round cannot start in silence.
+ */
+export function resolvePlayback(input: {
+  source: AudioSourceKind
+  instrumentalId?: string
+  originalYoutubeId?: string
+  originalFromHeader?: boolean
+  localAudioUrl?: string
+  mock?: boolean
+}): PlaybackPlan {
+  const mock = Boolean(input.mock)
+  const originalYoutube: PlaybackPlan = {
+    kind: 'original-youtube',
+    youtubeId: input.originalYoutubeId,
+    audioUrl: undefined,
+    youtubeFromHeader: Boolean(input.originalFromHeader),
+    fallbackToOriginal: false,
+    silent: !input.originalYoutubeId && !mock,
+  }
+  const originalFile: PlaybackPlan = {
+    kind: 'original-file',
+    youtubeId: undefined,
+    audioUrl: input.localAudioUrl,
+    youtubeFromHeader: false,
+    fallbackToOriginal: false,
+    silent: !input.localAudioUrl,
+  }
+
+  if (input.source === 'instrumental') {
+    if (input.instrumentalId) {
+      return {
+        kind: 'instrumental',
+        youtubeId: input.instrumentalId,
+        audioUrl: undefined,
+        youtubeFromHeader: false,
+        fallbackToOriginal: false,
+        silent: false,
+      }
+    }
+    if (mock) {
+      return {
+        kind: 'instrumental',
+        youtubeId: undefined,
+        audioUrl: undefined,
+        youtubeFromHeader: false,
+        fallbackToOriginal: false,
+        silent: false,
+      }
+    }
+    if (input.originalYoutubeId) {
+      return { ...originalYoutube, fallbackToOriginal: true, silent: false }
+    }
+    if (input.localAudioUrl) {
+      return { ...originalFile, fallbackToOriginal: true, silent: false }
+    }
+    return {
+      kind: 'none',
+      youtubeId: undefined,
+      audioUrl: undefined,
+      youtubeFromHeader: false,
+      fallbackToOriginal: false,
+      silent: true,
+    }
+  }
+
+  if (input.localAudioUrl) return originalFile
+  if (input.originalYoutubeId || mock) {
+    return { ...originalYoutube, silent: !input.originalYoutubeId && !mock }
+  }
+  return {
+    kind: 'none',
+    youtubeId: undefined,
+    audioUrl: undefined,
+    youtubeFromHeader: false,
+    fallbackToOriginal: false,
+    silent: true,
+  }
 }

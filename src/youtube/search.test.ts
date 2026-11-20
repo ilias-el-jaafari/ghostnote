@@ -87,8 +87,10 @@ describe('searchInstrumentals (mocked providers)', () => {
       throw new Error(`unexpected ${url}`)
     })
     const result = await searchInstrumentals('Artist', 'Song', { apiKey: 'AIzaSyTestKey11', fetchImpl })
+    expect(result.ok).toBe(true)
     expect(result.provider).toBe('youtube-data')
-    expect(result.query).toBe('Artist Song karaoke instrumental')
+    expect(result.query).toBe('Artist Song instrumental')
+    expect(result.attempts.some((item) => item.provider === 'youtube-data' && item.status === 'found')).toBe(true)
     expect(result.candidates.map((item) => item.id)).toEqual(['close___001', 'far_____002'])
     expect(result.candidates[0]?.durationMs).toBe(261_000)
     const picked = autoSelectInstrumental(261_000, result.candidates)
@@ -121,7 +123,7 @@ describe('searchInstrumentals (mocked providers)', () => {
     ])
   })
 
-  it('falls back to Piped after Invidious fails, then throws if every provider fails', async () => {
+  it('falls back to Piped after Invidious fails, then reports failure if every provider fails', async () => {
     const pipedFetch = vi.fn(async (input: string) => {
       const url = String(input)
       if (url.includes('/api/v1/search')) return new Response('down', { status: 503 })
@@ -144,14 +146,16 @@ describe('searchInstrumentals (mocked providers)', () => {
     expect(piped.candidates[0]?.id).toBe('pipedId__01')
     expect(piped.candidates[0]?.durationMs).toBe(238_000)
 
-    await expect(
-      searchInstrumentals('A', 'B', {
-        fetchImpl: async () => new Response('nope', { status: 500 }),
-        invidious: ['https://inv.down.test'],
-        piped: ['https://piped.down.test'],
-        timeoutMs: 200,
-      }),
-    ).rejects.toThrow(/Instrumental search failed/)
+    const failed = await searchInstrumentals('A', 'B', {
+      fetchImpl: async () => new Response('nope', { status: 500 }),
+      invidious: ['https://inv.down.test'],
+      piped: ['https://piped.down.test'],
+      timeoutMs: 200,
+    })
+    expect(failed.ok).toBe(false)
+    expect(failed.candidates).toEqual([])
+    expect(failed.attempts.some((item) => item.status === 'failed')).toBe(true)
+    expect(failed.error).toMatch(/Instrumental search failed/)
   })
 })
 

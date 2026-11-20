@@ -40,6 +40,7 @@ type SingScreenProps = {
   song: ParsedSong
   audioUrl: string | undefined
   audioMissing: boolean
+  fallbackToOriginal?: boolean
   options: SessionOptions
   guideMuted: boolean
   guideVolume: number
@@ -60,6 +61,7 @@ export function SingScreen({
   song,
   audioUrl,
   audioMissing,
+  fallbackToOriginal = false,
   options,
   guideMuted,
   guideVolume,
@@ -303,6 +305,11 @@ export function SingScreen({
         <p className="sing-track outlined">
           {song.headers.artist} — {song.headers.title}
         </p>
+        {fallbackToOriginal ? (
+          <p className="banner banner-warn" role="status">
+            {t('instrumental.noInstrumentalFallback')}
+          </p>
+        ) : null}
         {audioMissing ? (
           <p className="banner banner-warn" role="status">
             {t('sing.audioMissing')}

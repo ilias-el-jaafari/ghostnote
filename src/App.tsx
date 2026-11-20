@@ -17,6 +17,7 @@ import {
   persistSourcePreference,
   readInstrumentalId,
   readSourcePreference,
+  resolvePlayback,
   songIdentityKey,
   type AudioSourceKind,
 } from './youtube/instrumentals.ts'
@@ -103,24 +104,23 @@ export default function App() {
       instrumentalId,
       hasLocalAudio: Boolean(selectedBase?.audioUrl),
     })
+  const playback = resolvePlayback({
+    source: audioSource,
+    instrumentalId,
+    originalYoutubeId: selectedBase?.youtubeId ?? flags.ytId,
+    originalFromHeader: selectedBase?.youtubeFromHeader,
+    localAudioUrl: selectedBase?.audioUrl,
+    mock: flags.ytMock,
+  })
   const selected = selectedBase
     ? {
         ...selectedBase,
-        audioUrl: audioSource === 'instrumental' ? undefined : selectedBase.audioUrl,
-        audioMissing:
-          audioSource === 'instrumental'
-            ? !instrumentalId && !flags.ytMock
-            : selectedBase.audioMissing && !selectedBase.youtubeId && !flags.ytMock,
-        youtubeId:
-          audioSource === 'instrumental'
-            ? instrumentalId
-            : selectedBase.audioUrl
-              ? undefined
-              : (flags.ytId ?? selectedBase.youtubeId),
-        youtubeFromHeader:
-          audioSource === 'original' && !selectedBase.audioUrl && !flags.ytId
-            ? selectedBase.youtubeFromHeader
-            : false,
+        audioUrl: playback.audioUrl,
+        audioMissing: playback.silent,
+        youtubeId: playback.youtubeId,
+        youtubeFromHeader: playback.youtubeFromHeader,
+        fallbackToOriginal: playback.fallbackToOriginal,
+        silent: playback.silent,
       }
     : undefined
   const [result, setResult] = useState<RoundResult | undefined>(() =>
@@ -139,11 +139,15 @@ export default function App() {
 
   const startSinging = useCallback(() => {
     if (!selectedBase) return
+    if (playback.silent) {
+      setLoadError(t('instrumental.cannotStartSilent'))
+      return
+    }
     prepareForSong()
     setSeekMs(undefined)
     setResult(undefined)
     setView('sing')
-  }, [selectedBase, prepareForSong])
+  }, [selectedBase, prepareForSong, playback.silent, t])
 
   const onSingFinished = useCallback((next: RoundResult) => {
     setResult(next)
@@ -193,7 +197,8 @@ export default function App() {
         <SingScreen
           song={selected.song}
           audioUrl={selected.audioUrl}
-          audioMissing={selected.audioMissing && !selected.youtubeId && !flags.ytMock}
+          audioMissing={playback.silent}
+          fallbackToOriginal={playback.fallbackToOriginal}
           options={sessionOptions}
           youtubeId={selected.youtubeId}
           youtubeFromHeader={selected.youtubeFromHeader}
@@ -253,6 +258,8 @@ export default function App() {
         onMicSensitivity={mix.setMicSensitivity}
         audioSource={audioSource}
         instrumentalId={instrumentalId}
+        fallbackToOriginal={Boolean(selected?.fallbackToOriginal)}
+        silent={Boolean(selected?.silent)}
         mockYoutube={flags.ytMock}
         onSourceChange={onSourceChange}
         onInstrumentalId={onInstrumentalId}

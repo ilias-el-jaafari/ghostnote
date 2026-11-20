@@ -8,6 +8,7 @@ import {
   persistSourcePreference,
   readInstrumentalId,
   readSourcePreference,
+  resolvePlayback,
   songIdentityKey,
 } from './instrumentals.ts'
 
@@ -32,12 +33,12 @@ describe('songIdentityKey', () => {
 })
 
 describe('instrumentalSearchUrl', () => {
-  it('opens a YouTube search for artist, title, karaoke instrumental', () => {
-    expect(instrumentalSearchQuery('Beyoncé', 'Halo')).toBe('Beyoncé Halo karaoke instrumental')
+  it('opens a YouTube search for artist, title, instrumental (no “karaoke”)', () => {
+    expect(instrumentalSearchQuery('Beyoncé', 'Halo')).toBe('Beyoncé Halo instrumental')
     const url = instrumentalSearchUrl('Beyoncé', 'Halo')
     expect(url.startsWith('https://www.youtube.com/results?search_query=')).toBe(true)
-    expect(decodeURIComponent(url)).toContain('karaoke instrumental')
-    expect(decodeURIComponent(url)).toContain('Halo')
+    expect(decodeURIComponent(url)).toContain('Halo instrumental')
+    expect(decodeURIComponent(url)).not.toContain('karaoke')
   })
 })
 
@@ -77,5 +78,57 @@ describe('defaultSource', () => {
     expect(defaultSource({ instrumentalId: 'InstrId_001', hasLocalAudio: true })).toBe('instrumental')
     expect(defaultSource({ hasLocalAudio: false })).toBe('instrumental')
     expect(defaultSource({ hasLocalAudio: true })).toBe('original')
+  })
+})
+
+describe('resolvePlayback — never start silently', () => {
+  it('uses a resolved instrumental id when one is available', () => {
+    const plan = resolvePlayback({
+      source: 'instrumental',
+      instrumentalId: 'InstrId_001',
+      originalYoutubeId: 'OrigId___01',
+    })
+    expect(plan.kind).toBe('instrumental')
+    expect(plan.youtubeId).toBe('InstrId_001')
+    expect(plan.fallbackToOriginal).toBe(false)
+    expect(plan.silent).toBe(false)
+  })
+
+  it('falls back to the original #VIDEO id when no instrumental was found', () => {
+    const plan = resolvePlayback({
+      source: 'instrumental',
+      originalYoutubeId: 'OrigId___01',
+      originalFromHeader: true,
+    })
+    expect(plan.kind).toBe('original-youtube')
+    expect(plan.youtubeId).toBe('OrigId___01')
+    expect(plan.youtubeFromHeader).toBe(true)
+    expect(plan.fallbackToOriginal).toBe(true)
+    expect(plan.silent).toBe(false)
+  })
+
+  it('falls back to the local original file when there is no #VIDEO id', () => {
+    const plan = resolvePlayback({
+      source: 'instrumental',
+      localAudioUrl: 'blob:audio',
+    })
+    expect(plan.kind).toBe('original-file')
+    expect(plan.audioUrl).toBe('blob:audio')
+    expect(plan.fallbackToOriginal).toBe(true)
+    expect(plan.silent).toBe(false)
+  })
+
+  it('is silent only when instrumental mode has nothing at all to play', () => {
+    const plan = resolvePlayback({ source: 'instrumental' })
+    expect(plan.kind).toBe('none')
+    expect(plan.silent).toBe(true)
+    expect(plan.youtubeId).toBeUndefined()
+    expect(plan.audioUrl).toBeUndefined()
+  })
+
+  it('does not treat a mock player as silent', () => {
+    const plan = resolvePlayback({ source: 'instrumental', mock: true })
+    expect(plan.silent).toBe(false)
+    expect(plan.kind).toBe('instrumental')
   })
 })

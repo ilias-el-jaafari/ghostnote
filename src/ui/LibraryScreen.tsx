@@ -38,6 +38,8 @@ type LibraryScreenProps = {
   onMicSensitivity: (value: number) => void
   audioSource: AudioSourceKind
   instrumentalId: string | undefined
+  fallbackToOriginal?: boolean
+  silent?: boolean
   mockYoutube?: boolean
   onSourceChange: (source: AudioSourceKind) => void
   onInstrumentalId: (videoId: string | undefined) => void
@@ -69,6 +71,8 @@ export function LibraryScreen({
   onMicSensitivity,
   audioSource,
   instrumentalId,
+  fallbackToOriginal = false,
+  silent = false,
   mockYoutube = false,
   onSourceChange,
   onInstrumentalId,
@@ -167,6 +171,7 @@ export function LibraryScreen({
                 selected={song.id === selected?.id}
                 duration={durationLabel(song, (n) => t('home.duration', { n }))}
                 onSelect={() => onSelect(song.id)}
+                silent={silent && song.id === selected?.id}
                 onSing={() => {
                   onSelect(song.id)
                   onSing()
@@ -185,6 +190,7 @@ export function LibraryScreen({
                     selected={song.id === selected?.id}
                     duration={durationLabel(song, (n) => t('home.duration', { n }))}
                     onSelect={() => onSelect(song.id)}
+                    silent={silent && song.id === selected?.id}
                     onSing={() => {
                       onSelect(song.id)
                       onSing()
@@ -255,6 +261,7 @@ export function LibraryScreen({
                 hasLocalAudio={Boolean(selected.audioUrl)}
                 source={audioSource}
                 instrumentalId={instrumentalId}
+                fallbackToOriginal={fallbackToOriginal}
                 mock={mockYoutube}
                 onSourceChange={onSourceChange}
                 onInstrumentalId={onInstrumentalId}
@@ -277,9 +284,10 @@ export function LibraryScreen({
                   </span>
                 </label>
               ) : null}
-              <button type="button" className="btn btn-primary" onClick={onSing}>
+              <button type="button" className="btn btn-primary" onClick={onSing} disabled={silent}>
                 {t('home.sing')}
               </button>
+              {silent ? <p className="banner banner-warn">{t('instrumental.cannotStartSilent')}</p> : null}
             </div>
           ) : null}
         </div>
@@ -296,12 +304,14 @@ function SongCard({
   song,
   selected,
   duration,
+  silent = false,
   onSelect,
   onSing,
 }: {
   song: LoadedSong
   selected: boolean
   duration: string
+  silent?: boolean
   onSelect: () => void
   onSing: () => void
 }) {
@@ -322,7 +332,7 @@ function SongCard({
           </span>
         </p>
       </button>
-      <button type="button" className="btn btn-primary btn-compact" onClick={onSing}>
+      <button type="button" className="btn btn-primary btn-compact" onClick={onSing} disabled={silent}>
         {t('home.sing')}
       </button>
     </article>

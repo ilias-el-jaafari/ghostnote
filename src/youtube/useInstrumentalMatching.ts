@@ -13,6 +13,7 @@ import {
   readYoutubeApiKey,
   referenceDurationMs,
   searchInstrumentals,
+  type ProviderAttempt,
   type SearchCandidate,
   type SearchProvider,
 } from './search.ts'
@@ -28,6 +29,7 @@ export type MatchingState = {
   candidates: SearchCandidate[]
   selected: SearchCandidate | undefined
   comparison: DurationComparison | undefined
+  attempts: ProviderAttempt[]
   retry: () => void
   choose: (id: string) => void
   applyPasted: (ids: string[]) => Promise<void>
@@ -90,6 +92,7 @@ export function useInstrumentalMatching(options: {
   const songKey = useMemo(() => songIdentityKey(artist, title), [artist, title])
   const [status, setStatus] = useState<MatchingStatus>('idle')
   const [error, setError] = useState<string | undefined>(undefined)
+  const [attempts, setAttempts] = useState<ProviderAttempt[]>([])
   const [query, setQuery] = useState('')
   const [provider, setProvider] = useState<SearchProvider | undefined>(undefined)
   const [referenceMs, setReferenceMs] = useState<number | undefined>(undefined)
@@ -161,7 +164,13 @@ export function useInstrumentalMatching(options: {
           if (controller.signal.aborted) return
           setQuery(result.query)
           setProvider(result.provider)
+          setAttempts(result.attempts)
           setCandidates(result.candidates)
+          if (!result.ok) {
+            setStatus('failed')
+            setError(result.error)
+            return
+          }
           if (reference) {
             const picked = autoSelectInstrumental(reference, result.candidates)
             if (picked.selected) {
@@ -175,6 +184,7 @@ export function useInstrumentalMatching(options: {
         } catch (caught) {
           if (controller.signal.aborted) return
           setCandidates([])
+          setAttempts([])
           setStatus('failed')
           setError(caught instanceof Error ? caught.message : 'search failed')
         }
@@ -253,6 +263,7 @@ export function useInstrumentalMatching(options: {
     candidates,
     selected,
     comparison,
+    attempts,
     retry: () => setNonce((value) => value + 1),
     choose,
     applyPasted,

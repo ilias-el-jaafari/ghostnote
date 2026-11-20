@@ -6,12 +6,13 @@
  * Lookup order (all keyless except the first):
  *   1. YouTube Data API v3, if the user has pasted an API key (stored only
  *      in localStorage as `ghostnote-youtube-api-key`).
- *   2. Public Invidious instances (`/api/v1/search` already includes
- *      lengthSeconds), then Piped (`/search` + duration on each item).
+ *   2. Public Piped (then Invidious) instances that have been verified to
+ *      allow CORS from the GitHub Pages origin. Hosts that fail CORS in a
+ *      real browser are omitted — a server-side curl is not enough.
  * Each instance is tried with a short timeout; a failure moves on.
  *
- * If every provider fails, the UI falls back to “Find on YouTube” (a normal
- * youtube.com search tab) plus a paste-URL field.
+ * If every provider fails, the UI falls back to the original #VIDEO id
+ * (never start silently), plus “Find on YouTube” and a paste-URL field.
  */
 
 import {
@@ -29,22 +30,30 @@ export const TYPICAL_OUTRO_MS = 6000
 
 export const SEARCH_TIMEOUT_MS = 4500
 
-export const INVIDIOUS_INSTANCES = [
-  'https://inv.nadeko.net',
-  'https://invidious.nerdvpn.de',
-  'https://iv.ggtyler.dev',
-  'https://invidious.fdn.fr',
-  'https://yewtu.be',
-] as const
+/**
+ * Invidious hosts checked from headless Chromium on the live Pages origin
+ * (2026-11-20) all failed CORS or timed out. Kept empty so we do not stall
+ * the search. Tests may inject instances.
+ */
+export const INVIDIOUS_INSTANCES: readonly string[] = []
 
-export const PIPED_INSTANCES = [
-  'https://pipedapi.kavin.rocks',
-  'https://pipedapi.adminforge.de',
-  'https://api.piped.private.coffee',
-  'https://pipedapi.reallyaweso.me',
-] as const
+/**
+ * Piped hosts verified to allow CORS from https://ilias-el-jaafari.github.io
+ * in a real Chromium session. Other public instances failed with
+ * “Failed to fetch” (CORS / blocked) or timed out.
+ */
+export const PIPED_INSTANCES = ['https://api.piped.private.coffee'] as const
 
 export type SearchProvider = 'youtube-data' | 'invidious' | 'piped' | 'mock'
+
+export type ProviderAttemptStatus = 'searching' | 'found' | 'failed'
+
+export type ProviderAttempt = {
+  provider: SearchProvider
+  instance?: string
+  status: ProviderAttemptStatus
+  detail?: string
+}
 
 export type SearchCandidate = {
   id: string
@@ -55,8 +64,11 @@ export type SearchCandidate = {
 
 export type InstrumentalSearchResult = {
   candidates: SearchCandidate[]
-  provider: SearchProvider
+  provider: SearchProvider | undefined
   query: string
+  attempts: ProviderAttempt[]
+  ok: boolean
+  error?: string
 }
 
 export type AutoSelectResult = {
@@ -347,12 +359,13 @@ export async function searchInstrumentals(
   options: SearchOptions = {},
 ): Promise<InstrumentalSearchResult> {
   const query = instrumentalSearchQuery(artist, title)
+  const attempts: ProviderAttempt[] = []
   if (options.mockCandidates) {
-    return { candidates: options.mockCandidates, provider: 'mock', query }
+    attempts.push({ provider: 'mock', status: 'found', detail: `${options.mockCandidates.length} candidates` })
+    return { candidates: options.mockCandidates, provider: 'mock', query, attempts, ok: true }
   }
   const fetchImpl = options.fetchImpl ?? fetch
   const timeoutMs = options.timeoutMs ?? SEARCH_TIMEOUT_MS
-  const errors: string[] = []
 
   if (options.apiKey) {
     try {
@@ -363,58 +376,81 @@ export async function searchInstrumentals(
       try {
         const candidates = await searchWithYoutubeData(query, options.apiKey, fetchImpl, controller.signal)
         if (candidates.length > 0) {
-          return { candidates, provider: 'youtube-data', query }
+          attempts.push({ provider: 'youtube-data', status: 'found', detail: `${candidates.length} candidates` })
+          return { candidates, provider: 'youtube-data', query, attempts, ok: true }
         }
+        attempts.push({ provider: 'youtube-data', status: 'failed', detail: 'empty result' })
       } finally {
         clearTimeout(timer)
         options.signal?.removeEventListener('abort', onParent)
       }
     } catch (error) {
-      errors.push(error instanceof Error ? error.message : 'youtube-data failed')
+      attempts.push({
+        provider: 'youtube-data',
+        status: 'failed',
+        detail: error instanceof Error ? error.message : 'youtube-data failed',
+      })
     }
   }
 
-  try {
-    const { value } = await firstSuccess(
-      options.invidious ?? INVIDIOUS_INSTANCES,
-      async (base, signal) => {
-        const json = await fetchJson(
-          `${base}/api/v1/search?q=${encodeURIComponent(query)}&type=video`,
-          fetchImpl,
-          signal,
-        )
-        const candidates = parseInvidiousSearch(json)
-        if (candidates.length === 0) throw new Error('empty invidious result')
-        return candidates
-      },
-      timeoutMs,
-      options.signal,
-    )
-    return { candidates: value, provider: 'invidious', query }
-  } catch (error) {
-    errors.push(error instanceof Error ? error.message : 'invidious failed')
+  const invidious = options.invidious ?? INVIDIOUS_INSTANCES
+  if (invidious.length > 0) {
+    try {
+      const { value, base } = await firstSuccess(
+        invidious,
+        async (base, signal) => {
+          const json = await fetchJson(
+            `${base}/api/v1/search?q=${encodeURIComponent(query)}&type=video`,
+            fetchImpl,
+            signal,
+          )
+          const candidates = parseInvidiousSearch(json)
+          if (candidates.length === 0) throw new Error('empty invidious result')
+          return candidates
+        },
+        timeoutMs,
+        options.signal,
+      )
+      attempts.push({ provider: 'invidious', instance: base, status: 'found', detail: `${value.length} candidates` })
+      return { candidates: value, provider: 'invidious', query, attempts, ok: true }
+    } catch (error) {
+      attempts.push({
+        provider: 'invidious',
+        status: 'failed',
+        detail: error instanceof Error ? error.message : 'invidious failed',
+      })
+    }
   }
 
-  try {
-    const { value } = await firstSuccess(
-      options.piped ?? PIPED_INSTANCES,
-      async (base, signal) => {
-        const json = await fetchJson(
-          `${base}/search?q=${encodeURIComponent(query)}&filter=videos`,
-          fetchImpl,
-          signal,
-        )
-        const candidates = parsePipedSearch(json)
-        if (candidates.length === 0) throw new Error('empty piped result')
-        return candidates
-      },
-      timeoutMs,
-      options.signal,
-    )
-    return { candidates: value, provider: 'piped', query }
-  } catch (error) {
-    errors.push(error instanceof Error ? error.message : 'piped failed')
+  const piped = options.piped ?? PIPED_INSTANCES
+  if (piped.length > 0) {
+    try {
+      const { value, base } = await firstSuccess(
+        piped,
+        async (base, signal) => {
+          const json = await fetchJson(
+            `${base}/search?q=${encodeURIComponent(query)}&filter=videos`,
+            fetchImpl,
+            signal,
+          )
+          const candidates = parsePipedSearch(json)
+          if (candidates.length === 0) throw new Error('empty piped result')
+          return candidates
+        },
+        timeoutMs,
+        options.signal,
+      )
+      attempts.push({ provider: 'piped', instance: base, status: 'found', detail: `${value.length} candidates` })
+      return { candidates: value, provider: 'piped', query, attempts, ok: true }
+    } catch (error) {
+      attempts.push({
+        provider: 'piped',
+        status: 'failed',
+        detail: error instanceof Error ? error.message : 'piped failed',
+      })
+    }
   }
 
-  throw new Error(`Instrumental search failed (${errors.join('; ') || 'no providers'})`)
+  const error = `Instrumental search failed (${attempts.map((item) => item.detail).filter(Boolean).join('; ') || 'no providers'})`
+  return { candidates: [], provider: undefined, query, attempts, ok: false, error }
 }

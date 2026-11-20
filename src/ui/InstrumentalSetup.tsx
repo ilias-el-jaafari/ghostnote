@@ -28,6 +28,7 @@ export type InstrumentalSetupProps = {
   hasLocalAudio: boolean
   source: AudioSourceKind
   instrumentalId: string | undefined
+  fallbackToOriginal?: boolean
   mock?: boolean
   onSourceChange: (source: AudioSourceKind) => void
   onInstrumentalId: (videoId: string | undefined) => void
@@ -40,6 +41,7 @@ export function InstrumentalSetup({
   hasLocalAudio: _hasLocalAudio,
   source,
   instrumentalId,
+  fallbackToOriginal = false,
   mock = false,
   onSourceChange,
   onInstrumentalId,
@@ -163,12 +165,38 @@ export function InstrumentalSetup({
           {t('instrumental.searching')}
         </p>
       ) : null}
+      {matching.attempts.length > 0 ? (
+        <ul className="search-attempts">
+          {matching.attempts.map((attempt, index) => (
+            <li key={`${attempt.provider}-${attempt.instance ?? index}`} className={`search-attempt is-${attempt.status}`}>
+              {t(
+                attempt.status === 'found'
+                  ? 'instrumental.providerFound'
+                  : attempt.status === 'searching'
+                    ? 'instrumental.providerSearching'
+                    : 'instrumental.providerFailed',
+                {
+                  provider: attempt.instance
+                    ? `${attempt.provider} (${attempt.instance.replace(/^https:\/\//, '')})`
+                    : attempt.provider,
+                },
+              )}
+              {attempt.detail && attempt.status === 'failed' ? ` — ${attempt.detail}` : ''}
+            </li>
+          ))}
+        </ul>
+      ) : null}
       {matching.status === 'failed' ? (
         <p className="banner banner-warn" role="status">
           {t('instrumental.searchFailed')}{' '}
           <button type="button" className="btn btn-ghost btn-compact" onClick={matching.retry}>
             {t('instrumental.retry')}
           </button>
+        </p>
+      ) : null}
+      {fallbackToOriginal && matching.status !== 'searching' ? (
+        <p className="banner banner-warn" role="status">
+          {t('instrumental.noInstrumentalFallback')}
         </p>
       ) : null}
 

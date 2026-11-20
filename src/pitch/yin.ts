@@ -31,6 +31,18 @@ export const DEFAULT_MAX_PITCH_HZ = 1000
  * Two to three periods of 70 Hz is ~1370–2057 samples; 4096 leaves headroom.
  */
 export const RECOMMENDED_PITCH_WINDOW = 4096
+
+/** Power-of-two analyser window that covers at least two periods of `minFrequency`. */
+export function pitchWindowSamples(
+  sampleRate: number,
+  minFrequency = DEFAULT_MIN_PITCH_HZ,
+): number {
+  const twoPeriods = Math.ceil((2 * sampleRate) / Math.max(1, minFrequency))
+  let size = RECOMMENDED_PITCH_WINDOW
+  while (size < twoPeriods) size *= 2
+  return Math.min(32768, size)
+}
+
 const DEFAULT_MIN_HZ = DEFAULT_MIN_PITCH_HZ
 const DEFAULT_MAX_HZ = DEFAULT_MAX_PITCH_HZ
 const DEFAULT_MIN_RMS = 0.001

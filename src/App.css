@@ -1952,3 +1952,50 @@
   font-size: 0.7rem;
   color: var(--muted);
 }
+
+.search-attempts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.search-attempt.is-found { color: #3dff5a; }
+.search-attempt.is-failed { color: var(--warn); }
+
+.mic-debug {
+  margin-top: 1.25rem;
+  display: grid;
+  gap: 0.5rem;
+}
+.mic-debug h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.mic-settings {
+  display: grid;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+}
+.mic-settings-title {
+  margin: 0;
+  font-weight: 650;
+}
+.mic-settings dl {
+  margin: 0;
+  display: grid;
+  gap: 0.2rem;
+}
+.mic-settings dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.mic-settings dt {
+  color: var(--muted);
+}
+.mic-settings dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}

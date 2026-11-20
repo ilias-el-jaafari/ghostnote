@@ -4,13 +4,15 @@ inclusion: always
 
 # Product Overview
 
-WakeStar is a modern web revival of the classic UltraStar karaoke game. It is the Kiroween 2026 entry in the Resurrection category by Ilias El Jaafari El Idrissi.
+GhostNote is a modern web revival of the classic UltraStar karaoke game. It is the Kiroween 2026 entry in the Resurrection category by Ilias El Jaafari El Idrissi.
 
 ## Why it exists
 
-UltraStar is a beloved PC karaoke game that scores you as you sing along to timed pitch notes. WakeStar brings that ritual back to life as a web app you can open on a laptop or a phone at a party, without installing a desktop client.
+UltraStar is a beloved PC karaoke game that scores you as you sing along to timed pitch notes. GhostNote brings that ritual back to life as a web app you can open on a laptop or a phone at a party, without installing a desktop client.
 
-The "resurrection" is literal: an old format and an old way of playing, woken up as a polished, touch-friendly product. The visual language should start from a retro early-2000s UltraStar feel (dark stage, neon bars, chunky notes) and come alive as a modern interface, with only subtle Halloween touches — especially ghostly green glowing notes.
+The "resurrection" is literal: an old format and an old way of playing, woken up as a web product. The Phase 3 visual language is specified in `.kiro/steering/visual-style.md`: Frutiger Aero / Aqua Gloss (2004–2009) plus a 2000s arcade rhythm-game HUD, with only subtle Halloween / ghostly-green touches. Flat or minimalist design is forbidden.
+
+The display name lives in one constant, `APP_NAME` in `src/config/brand.ts`. The UI is English and Spanish, with a language selector, persisted in localStorage, defaulting from the browser language.
 
 ## Target users
 
@@ -26,7 +28,7 @@ The product must need very little setup. A first-time guest should understand ho
 - Detect the singer's pitch in real time from the device microphone, in the browser.
 - Score the singer against the chart during playback (from Phase 2).
 - A library of original, copyright-free demo songs, plus the ability to load your own UltraStar files (Phase 3).
-- Party-friendly flow: song queue, take turns, duets, a scoreboard the group can see (Phase 4).
+- Party-friendly flow (Phase 4): song queue, take turns, duets, a scoreboard, and a required phones-as-microphones mode with a TV/laptop as the shared host screen (room code / QR; the phone detects pitch locally and sends pitch and score data in real time over WebSocket or WebRTC through a small relay).
 - Optional end-of-song "ghost" verdict: a funny persona inspired by the song's era — never an imitation of a real artist — and, if there is time, a generated ghost avatar (Phase 5).
 
 ## Constraints and principles

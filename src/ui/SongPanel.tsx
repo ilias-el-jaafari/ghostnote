@@ -1,5 +1,6 @@
 import type { ChangeEvent, DragEvent, FormEvent } from 'react'
 import { useId, useState } from 'react'
+import { useI18n } from '../i18n/index.ts'
 import type { LyricLine, ParsedSong } from '../parser/index.ts'
 
 type SongPanelProps = {
@@ -10,14 +11,15 @@ type SongPanelProps = {
   onLoadDemo: () => void
 }
 
-function voiceLabel(song: ParsedSong, voice: number): string {
-  return song.headers.voiceNames[voice] ?? `Voice ${voice}`
-}
-
 function LineView({ line, showVoice }: { line: LyricLine; showVoice: boolean }) {
+  const { t } = useI18n()
   return (
     <p className="lyric-line">
-      {showVoice ? <span className="lyric-voice">P{line.voice}</span> : null}
+      {showVoice ? (
+        <span className="lyric-voice">
+          {t('home.voice', { n: line.voice })}
+        </span>
+      ) : null}
       {line.notes.map((note, index) => (
         <span
           key={`${note.startBeat}-${index}`}
@@ -38,6 +40,7 @@ export function SongPanel({
   onLoadText,
   onLoadDemo,
 }: SongPanelProps) {
+  const { t } = useI18n()
   const inputId = useId()
   const [dragOver, setDragOver] = useState(false)
   const [readError, setReadError] = useState<string | undefined>(undefined)
@@ -51,9 +54,7 @@ export function SongPanel({
       const text = await file.text()
       onLoadText(text, file.name)
     } catch (caught) {
-      setReadError(
-        caught instanceof Error ? caught.message : 'Could not read that file.',
-      )
+      setReadError(caught instanceof Error ? caught.message : t('home.readError'))
     }
   }
 
@@ -82,7 +83,7 @@ export function SongPanel({
   return (
     <section className="panel song-panel">
       <header className="panel-header">
-        <h2>Song</h2>
+        <h2>{t('home.song')}</h2>
         {sourceName ? <p className="panel-kicker">{sourceName}</p> : null}
       </header>
 
@@ -100,11 +101,11 @@ export function SongPanel({
             accept=".txt,text/plain"
             onChange={onPick}
           />
-          <span className="dropzone-title">Load an UltraStar .txt file</span>
-          <span className="dropzone-hint">Tap to browse, or drop a file here.</span>
+          <span className="dropzone-title">{t('home.loadFile')}</span>
+          <span className="dropzone-hint">{t('home.loadFileHint')}</span>
         </label>
         <button type="button" className="btn btn-ghost" onClick={onLoadDemo}>
-          Load demo song
+          {t('home.loadDemo')}
         </button>
       </form>
 
@@ -118,30 +119,30 @@ export function SongPanel({
         <div className="song-body">
           <dl className="meta-grid">
             <div>
-              <dt>Title</dt>
+              <dt>{t('home.title')}</dt>
               <dd>{song.headers.title}</dd>
             </div>
             <div>
-              <dt>Artist</dt>
+              <dt>{t('home.artist')}</dt>
               <dd>{song.headers.artist}</dd>
             </div>
             <div>
-              <dt>BPM</dt>
+              <dt>{t('home.bpm')}</dt>
               <dd>{song.headers.bpm}</dd>
             </div>
             <div>
-              <dt>GAP</dt>
+              <dt>{t('home.gap')}</dt>
               <dd>{song.headers.gap} ms</dd>
             </div>
             <div>
-              <dt>Audio</dt>
+              <dt>{t('home.audio')}</dt>
               <dd>{song.headers.audioFile ?? '—'}</dd>
             </div>
             <div>
-              <dt>Voices</dt>
+              <dt>{t('home.voices')}</dt>
               <dd>
                 {song.voices
-                  .map((voice) => voiceLabel(song, voice))
+                  .map((voice) => song.headers.voiceNames[voice] ?? t('home.voice', { n: voice }))
                   .join(', ') || '1'}
               </dd>
             </div>
@@ -150,19 +151,25 @@ export function SongPanel({
           {song.warnings.length > 0 ? (
             <details className="warnings">
               <summary>
-                {song.warnings.length} warning{song.warnings.length === 1 ? '' : 's'}
+                {t(
+                  song.warnings.length === 1 ? 'home.warnings' : 'home.warningsPlural',
+                  { n: song.warnings.length },
+                )}
               </summary>
               <ul>
                 {song.warnings.map((warning, index) => (
                   <li key={`${warning.lineNumber}-${index}`}>
-                    Line {warning.lineNumber}: {warning.message}
+                    {t('home.warningLine', {
+                      line: warning.lineNumber,
+                      message: warning.message,
+                    })}
                   </li>
                 ))}
               </ul>
             </details>
           ) : null}
 
-          <h3>Lyrics</h3>
+          <h3>{t('home.lyrics')}</h3>
           <div className="lyrics">
             {song.lines.map((line, index) => (
               <LineView

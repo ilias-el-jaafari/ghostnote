@@ -1,39 +1,59 @@
-import { usePitchDetection } from '../pitch/usePitchDetection.ts'
+import { useI18n } from '../i18n/index.ts'
+import {
+  usePitchDetection,
+  type MicErrorCode,
+  type MicStatus,
+} from '../pitch/usePitchDetection.ts'
 
 function formatHz(frequency: number | null): string {
   if (frequency === null) return '—'
   return `${frequency.toFixed(1)} Hz`
 }
 
-function statusLabel(status: string, hasPitch: boolean): string {
+function statusKey(status: MicStatus, hasPitch: boolean) {
   switch (status) {
     case 'requesting':
-      return 'Waiting for microphone permission…'
+      return 'mic.requesting' as const
     case 'listening':
-      return hasPitch ? 'Pitch locked' : 'Listening — sing a steady note'
+      return hasPitch ? ('mic.locked' as const) : ('mic.listening' as const)
     case 'denied':
-      return 'Permission denied'
+      return 'mic.denied' as const
     case 'unsupported':
-      return 'Microphone not supported'
+      return 'mic.unsupported' as const
     case 'error':
-      return 'Microphone error'
+      return 'mic.error' as const
     default:
-      return 'Mic is off'
+      return 'mic.off' as const
+  }
+}
+
+function errorKey(code: MicErrorCode) {
+  switch (code) {
+    case 'unsupported':
+      return 'mic.err.unsupported' as const
+    case 'denied':
+      return 'mic.err.denied' as const
+    case 'notFound':
+      return 'mic.err.notFound' as const
+    default:
+      return 'mic.err.startFailed' as const
   }
 }
 
 export function MicTest() {
-  const { status, errorMessage, live, start, stop } = usePitchDetection()
+  const { t } = useI18n()
+  const { status, errorCode, errorDetail, live, start, stop } = usePitchDetection()
   const listening = status === 'listening'
   const level = Math.min(1, live.rms * 8)
   const cents = live.note?.cents ?? 0
   const needle = Math.max(-1, Math.min(1, cents / 50))
+  const centsLabel = `${cents >= 0 ? '+' : ''}${cents.toFixed(0)}`
 
   return (
     <section className="panel mic-panel">
       <header className="panel-header">
-        <h2>Microphone test</h2>
-        <p className="panel-kicker">{statusLabel(status, live.note !== null)}</p>
+        <h2>{t('mic.title')}</h2>
+        <p className="panel-kicker">{t(statusKey(status, live.note !== null))}</p>
       </header>
 
       <div className="tuner" aria-live="polite">
@@ -51,31 +71,27 @@ export function MicTest() {
           <span className="cents-mark cents-right">+50</span>
         </div>
         <p className="tuner-cents">
-          {live.note
-            ? `${cents >= 0 ? '+' : ''}${cents.toFixed(0)} cents`
-            : 'No pitch yet'}
+          {live.note ? t('mic.cents', { value: centsLabel }) : t('mic.noPitch')}
         </p>
       </div>
 
-      <div className="meter" aria-label="Input level">
+      <div className="meter" aria-label={t('mic.level')}>
         <span className="meter-bar" style={{ width: `${level * 100}%` }} />
       </div>
 
-      {errorMessage ? (
+      {errorCode ? (
         <p className="banner banner-error" role="alert">
-          {errorMessage}
+          {errorCode === 'startFailed' && errorDetail
+            ? errorDetail
+            : t(errorKey(errorCode))}
         </p>
       ) : (
-        <p className="mic-help">
-          On a phone, this page must be served over HTTPS (or localhost) and you
-          have to start the mic with a tap. If the permission prompt does not
-          appear, check the site settings for the microphone.
-        </p>
+        <p className="mic-help">{t('mic.help')}</p>
       )}
 
       {listening ? (
         <button type="button" className="btn btn-danger" onClick={() => void stop()}>
-          Stop microphone
+          {t('mic.stop')}
         </button>
       ) : (
         <button
@@ -84,7 +100,7 @@ export function MicTest() {
           onClick={() => void start()}
           disabled={status === 'requesting'}
         >
-          {status === 'requesting' ? 'Requesting…' : 'Start microphone'}
+          {status === 'requesting' ? t('mic.starting') : t('mic.start')}
         </button>
       )}
     </section>

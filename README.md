@@ -1,10 +1,12 @@
-# WakeStar
+# GhostNote
 
 A modern web revival of [UltraStar](https://usdx.eu/) karaoke, built as a Kiroween 2026 entry in the **Resurrection** category.
 
-WakeStar reads UltraStar `.txt` songs, listens to the microphone in the browser, and (from Phase 2) scores the singer in real time. It is meant for a party with friends and is designed to work as well on a phone as on a laptop.
+GhostNote reads UltraStar `.txt` songs, listens to the microphone in the browser, and (from Phase 2) scores the singer in real time. It is meant for a party with friends and is designed to work as well on a phone as on a laptop.
 
-**Phase 1 is implemented:** parse a song, show the lyrics, and test the mic. Gameplay, the full visual theme, party features, and the optional ghost verdict come later. See `.kiro/specs/resurrection-karaoke/tasks.md`.
+**Phase 2 is implemented:** parse a song, test the mic, sing a round (guide melody or silent clock), and see a score out of 10000. The Frutiger Aero visual theme, demo audio, party/phones-as-mics mode, and the optional ghost verdict come later. See `.kiro/specs/resurrection-karaoke/tasks.md`.
+
+The product name is the `APP_NAME` constant in `src/config/brand.ts`. The UI is English and Spanish (language selector, remembered in `localStorage`).
 
 ## Try it locally
 
@@ -15,6 +17,8 @@ npm run dev
 ```
 
 Then open the URL Vite prints (usually `http://localhost:5173`). On a phone, use the same machine's local IP over HTTP only if the browser allows microphone access; otherwise use HTTPS or a tunnel. Chrome and Safari require a user tap before the microphone can start.
+
+Add `?sim=1` to drive a development-only simulated singer (optional `&t=6000` to seek, `&screen=results` to jump to a perfect simulated result).
 
 ### Scripts
 
@@ -47,10 +51,13 @@ Pitch is estimated with the YIN algorithm on a time-domain buffer from a Web Aud
 ## Project layout
 
 ```
-.kiro/          Steering, the product spec, and agent hooks (required for Kiroween)
+.kiro/          Steering (including visual-style.md), the product spec, and hooks
+src/config/     Brand name constant
+src/i18n/       English and Spanish UI copy
 src/parser/     UltraStar parser and tests
 src/pitch/      YIN detector, note math, microphone hook
-src/ui/         Song panel and mic-test widget
+src/game/       Timing, scoring, simulated singer
+src/ui/         Home, sing, and results screens
 public/songs/   Demo charts
 ```
 

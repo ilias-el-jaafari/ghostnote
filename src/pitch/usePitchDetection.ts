@@ -17,8 +17,12 @@ export type LivePitch = {
   rms: number
 }
 
+export type MicErrorCode = 'unsupported' | 'denied' | 'notFound' | 'startFailed'
+
+export const MIC_MIN_RMS = 0.008
+
 const FFT_SIZE = 8192
-const MIN_RMS = 0.008
+const MIN_RMS = MIC_MIN_RMS
 
 function getAudioContextConstructor(): typeof AudioContext | undefined {
   if (typeof window === 'undefined') return undefined
@@ -36,7 +40,8 @@ function computeRms(samples: Float32Array): number {
 
 export function usePitchDetection() {
   const [status, setStatus] = useState<MicStatus>('idle')
-  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined)
+  const [errorCode, setErrorCode] = useState<MicErrorCode | undefined>(undefined)
+  const [errorDetail, setErrorDetail] = useState<string | undefined>(undefined)
   const [live, setLive] = useState<LivePitch>({
     frequency: null,
     note: null,
@@ -80,11 +85,13 @@ export function usePitchDetection() {
       !navigator.mediaDevices?.getUserMedia
     ) {
       setStatus('unsupported')
-      setErrorMessage('This browser cannot access a microphone.')
+      setErrorCode('unsupported')
+      setErrorDetail(undefined)
       return
     }
 
-    setErrorMessage(undefined)
+    setErrorCode(undefined)
+    setErrorDetail(undefined)
     setStatus('requesting')
 
     try {
@@ -157,20 +164,19 @@ export function usePitchDetection() {
       const name = error instanceof DOMException ? error.name : ''
       if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
         setStatus('denied')
-        setErrorMessage(
-          'Microphone permission was denied. Enable it in the browser settings and try again.',
-        )
+        setErrorCode('denied')
+        setErrorDetail(undefined)
         return
       }
       if (name === 'NotFoundError') {
         setStatus('error')
-        setErrorMessage('No microphone was found on this device.')
+        setErrorCode('notFound')
+        setErrorDetail(undefined)
         return
       }
       setStatus('error')
-      setErrorMessage(
-        error instanceof Error ? error.message : 'Could not start the microphone.',
-      )
+      setErrorCode('startFailed')
+      setErrorDetail(error instanceof Error ? error.message : undefined)
     }
   }, [stop])
 
@@ -182,7 +188,7 @@ export function usePitchDetection() {
     }
   }, [stopLoop])
 
-  return { status, errorMessage, live, start, stop }
+  return { status, errorCode, errorDetail, live, start, stop }
 }
 
 declare global {

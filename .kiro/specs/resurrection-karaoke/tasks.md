@@ -35,27 +35,34 @@ Tasks are grouped by phase. Do not start the next phase until the current phase 
 
 ## Phase 2 — Gameplay and scoring screen
 
-- [ ] 6. Add playback of the song audio aligned to `#GAP` and `#BPM`
-  - Use `beatToMs` from the parser; expose a clock the UI can subscribe to
-  - _Requirements: 3.1, 3.6_
+- [x] 6. Build the song timing engine (beats ↔ ms from `#BPM` / `#GAP`, v1 vs v2) with unit tests
+  - Timeline helpers for current / next line and active notes
+  - _Requirements: 3.1, 1.6_
 
-- [ ] 7. Implement scoring math as pure, tested functions
-  - Pitched notes, golden multiplier, rap presence, freestyle ignored
-  - Octave-tolerant hit window; document the default tolerance
-  - _Requirements: 3.2, 3.3, 3.4, 2.4, 9.1_
+- [x] 7. Implement scoring math as pure, tested functions
+  - 9000 note points + 1000 line bonus = 10000; golden 2×; freestyle 0; rap by presence
+  - Octave-tolerant 50-cent window; 50% coverage to count a beat
+  - _Requirements: 3.2, 3.3, 3.4, 3.7, 2.4, 10.1_
 
-- [ ] 8. Build the gameplay screen
-  - Current lyric and upcoming notes, running score, pause/restart
-  - End-of-song total and a large, readable grade
-  - _Requirements: 3.1, 3.5, 3.6, 4.1, 4.4_
+- [x] 8. Build the sing screen and results screen
+  - Scrolling pitch-lane note highway, live pitch marker, current + next lyric, pause/restart
+  - Synthesized guide melody or silent clock until real audio exists
+  - Dev-only simulated singer (`?sim=1`) and a headless integration playthrough test
+  - English / Spanish UI with a language selector
+  - _Requirements: 3.1, 3.5, 3.6, 3.8, 3.9, 4.1, 4.4, 9.1, 9.2, 9.3_
 
-## Phase 3 — Resurrection theme, library, and deploy
+## Phase 3 — Frutiger Aero theme, library, and deploy
 
-- [ ] 9. Apply the Resurrection visual theme
-  - Retro early-2000s UltraStar cues waking into a modern UI
-  - Ghostly green glowing notes, gold for golden notes, restrained Halloween atmosphere
-  - Honour `prefers-reduced-motion`
-  - _Requirements: 5.1, 5.2, 5.3, 5.4_
+Follow `.kiro/steering/visual-style.md`. Do not ship a flat or minimalist look.
+
+- [ ] 9. Apply the Frutiger Aero / Aqua Gloss + 2000s rhythm-HUD theme
+  - GLSL / WebGL MilkDrop-style background (soft fractals, translucent moving geometry)
+  - Glossy 3D capsule bars and buttons: top-45% white reflection, bevel, inset box-shadow
+  - Additive particles and lens flares (`lighter` / AdditiveBlending)
+  - AnalyserNode waveforms; rgba HUD plates with a thin bright top border
+  - Classic sans-serif with a hard black outline; subtle ghostly-green notes, gold for goldens
+  - Performance fallbacks: reduced shader quality on low-end phones, `prefers-reduced-motion`, CSS Aero fallback without WebGL
+  - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8_
 
 - [ ] 10. Song library with demo audio and custom-file loading
   - Ship original, copyright-free demo audio next to the charts
@@ -65,9 +72,9 @@ Tasks are grouped by phase. Do not start the next phase until the current phase 
 
 - [ ] 11. Deploy a public static build and confirm the live URL
   - Ask Ilias which host to use before publishing
-  - _Requirements: 4.3, 9.3_
+  - _Requirements: 4.3, 10.3_
 
-## Phase 4 — Party features
+## Phase 4 — Party features (including phones as mics)
 
 - [ ] 12. Add a song queue and take-turns flow so the next singer can start without a reload
   - _Requirements: 7.1_
@@ -78,8 +85,11 @@ Tasks are grouped by phase. Do not start the next phase until the current phase 
 - [ ] 14. Show a party scoreboard that is readable from a short distance
   - _Requirements: 7.3, 4.1_
 
-- [ ] 15. (Optional) Explore a phones-as-mics / shared-screen mode only if local play is already solid
-  - _Requirements: 7.4_
+- [ ] 15. Phones-as-microphones with a TV/laptop host screen
+  - Host shows a room code and QR; phones join, detect pitch locally, and send pitch/score data in real time
+  - Transport: WebSocket or WebRTC plus a small relay; do not upload raw mic audio
+  - Local one-device play still works if no phone joins
+  - _Requirements: 7.4, 7.5, 7.6_
 
 ## Phase 5 — Optional decorative ghost verdict
 
@@ -99,4 +109,4 @@ Tasks are grouped by phase. Do not start the next phase until the current phase 
 - [ ] 19. Record a demo video under 3 minutes and write the Devpost submission
   - Public GitHub repo with `/.kiro` at the root, after Ilias confirms the repo name
   - Deadline: 4 December 2026, 23:00 Europe/Madrid
-  - _Requirements: 9.2, 9.3, 9.4_
+  - _Requirements: 10.2, 10.3, 10.4_

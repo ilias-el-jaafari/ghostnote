@@ -29,7 +29,7 @@ for (const viewport of viewports) {
   })
 
   await page.goto(url, { waitUntil: 'networkidle' })
-  await page.getByRole('heading', { name: 'WakeStar' }).waitFor()
+  await page.getByRole('heading', { name: 'GhostNote' }).waitFor()
   await page.getByText('Midnight Echo', { exact: true }).waitFor()
   await page.evaluate(() => document.fonts.ready)
   await page.waitForTimeout(400)

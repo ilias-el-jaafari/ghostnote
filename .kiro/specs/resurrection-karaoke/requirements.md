@@ -2,7 +2,7 @@
 
 ## Introduction
 
-WakeStar resurrects UltraStar as a web karaoke game for a party with friends. Players load an UltraStar `.txt` song (or a built-in copyright-free demo), sing into the device microphone, and are scored in real time. The app must work equally well on a computer and a phone. This specification covers the whole product, delivered in five phases.
+GhostNote resurrects UltraStar as a web karaoke game for a party with friends. Players load an UltraStar `.txt` song (or a built-in copyright-free demo), sing into the device microphone, and are scored in real time. The app must work equally well on a computer and a phone. This specification covers the whole product, delivered in five phases.
 
 ## Glossary
 
@@ -52,6 +52,9 @@ WakeStar resurrects UltraStar as a web karaoke game for a party with friends. Pl
 4. WHILE a freestyle note is active, THE SYSTEM SHALL display the lyric but SHALL NOT award points.
 5. WHEN the song ends, THE SYSTEM SHALL show a total score and a simple grade or ranking that the group can read from across the room.
 6. WHEN the user pauses, restarts, or leaves the round, THE SYSTEM SHALL stop scoring cleanly and release or pause audio playback.
+7. THE SYSTEM SHALL award up to 9000 points for notes (golden and golden-rap notes worth 2×, freestyle 0) and up to 1000 points of line bonus, for a maximum of 10000 in the UltraStar tradition, using an octave-tolerant window of 50 cents.
+8. WHILE demo or user audio is missing, THE SYSTEM SHALL still run a round on a silent clock or a synthesized guide melody so timing and scoring can be tested.
+9. THE SYSTEM SHALL provide a development-only simulated singer that can feed the expected pitch (with optional noise) so scoring can be verified headlessly and on screen without a microphone.
 
 ### Requirement 4: Desktop and mobile as equals
 
@@ -66,14 +69,20 @@ WakeStar resurrects UltraStar as a web karaoke game for a party with friends. Pl
 
 ### Requirement 5: Resurrection presentation
 
-**User Story:** As a player and as a contest judge, I want the interface to feel like classic UltraStar coming back to life, so that the Resurrection category is obvious without turning the party into a horror game.
+**User Story:** As a player and as a contest judge, I want the interface to feel like a 2000s rhythm game coming back to life — glossy Frutiger Aero glass, not a flat modern app — so that the Resurrection category is obvious without turning the party into a horror game.
+
+The detailed visual system is in `.kiro/steering/visual-style.md` and is implemented in Phase 3.
 
 #### Acceptance Criteria
 
-1. THE SYSTEM SHALL use a visual theme that recalls early-2000s UltraStar (dark stage, neon note bars, a slightly retro typography) and then reads as a modern, polished web UI.
-2. WHEN notes are shown on the gameplay screen, THE SYSTEM SHALL give them a subtle ghostly green glow, with golden notes remaining distinctly gold.
-3. THE SYSTEM SHALL keep Halloween cues light: atmosphere and motion, not gore, jump scares, or decoration that hides the lyrics or the score.
-4. THE SYSTEM SHALL remain fully playable if motion or decorative effects are reduced (for example via `prefers-reduced-motion`).
+1. THE SYSTEM SHALL use a Frutiger Aero / Aqua Gloss (2004–2009) aesthetic mixed with a 2000s arcade rhythm-game HUD. Flat or minimalist design is forbidden.
+2. THE SYSTEM SHALL render the stage background with a GLSL fragment shader (WebGL) in a Winamp MilkDrop style: soft fractals and translucent moving geometry.
+3. WHEN bars and buttons are shown, THE SYSTEM SHALL style them as glossy 3D capsules with a semi-transparent white reflection cut across the top 45%, plus a bevel and an inset box-shadow.
+4. THE SYSTEM SHALL draw particles and lens flares with additive blending (`globalCompositeOperation 'lighter'` in Canvas 2D, or AdditiveBlending / equivalent in WebGL).
+5. THE SYSTEM SHALL show real-time audio waveforms from a Web Audio `AnalyserNode`, and SHALL present HUD panels as semi-transparent black `rgba` surfaces with a thin bright top border.
+6. THE SYSTEM SHALL use classic sans-serif typography with a hard black outline on stage/HUD text so it stays readable over the shader.
+7. WHEN notes are shown on the gameplay screen, THE SYSTEM SHALL give them a subtle ghostly green glow, with golden notes remaining distinctly gold. Halloween cues stay light: no gore, jump scares, or decoration that hides the lyrics or the score.
+8. WHEN `prefers-reduced-motion` is set, or the device is low-end / WebGL is unavailable, THE SYSTEM SHALL fall back to reduced shader quality or a static Aero look and SHALL remain fully playable.
 
 ### Requirement 6: Song library and custom files
 
@@ -95,7 +104,9 @@ WakeStar resurrects UltraStar as a web karaoke game for a party with friends. Pl
 1. WHEN more than one person wants to sing, THE SYSTEM SHALL support a simple turn-taking or queue flow so the next singer can be chosen without reloading the app.
 2. WHEN a song has two (or more) voices, THE SYSTEM SHALL allow a duet performance that scores those voices separately.
 3. THE SYSTEM SHALL show a scoreboard that remains readable to people standing a short distance from the screen.
-4. IF a networked "phones as mics, TV as screen" mode is added, THE SYSTEM SHALL treat it as an enhancement of local play, not a requirement to start a party.
+4. THE SYSTEM SHALL provide a phones-as-microphones party mode: a TV or laptop is the shared host screen, each singer's phone detects pitch locally, and the phone sends pitch and score data in real time to the host. Players join with a short room code and a QR code.
+5. THE SYSTEM SHALL carry that real-time link over WebSocket or WebRTC, through a small relay if needed. Microphone audio stays on the phone; only pitch/score (and similar compact game data) is sent.
+6. THE SYSTEM SHALL still allow a local one-device party (queue, turns, duets, scoreboard) when nobody joins from a phone.
 
 ### Requirement 8: Optional ghost verdict
 
@@ -108,7 +119,17 @@ WakeStar resurrects UltraStar as a web karaoke game for a party with friends. Pl
 3. IF image generation is used, THE SYSTEM SHALL generate a fictional ghost avatar that does not depict a real person, and the feature SHALL degrade gracefully to the written verdict when generation is unavailable.
 4. THE SYSTEM SHALL keep this feature optional and decorative: gameplay and scoring MUST work when the verdict is disabled or fails.
 
-### Requirement 9: Quality, safety, and contest packaging
+### Requirement 9: Language and product name
+
+**User Story:** As Ilias and as a Devpost judge, I want the app to work in English and Spanish and to be easy to rename, so that friends can play in their language and the official name can be changed in one place.
+
+#### Acceptance Criteria
+
+1. THE SYSTEM SHALL expose the product display name as a single constant (`APP_NAME` in `src/config/brand.ts`) and use it in the UI, the web manifest, and document titles.
+2. THE SYSTEM SHALL provide a complete English and Spanish UI, including a language selector.
+3. WHEN the user picks a language, THE SYSTEM SHALL persist it in `localStorage`. WHEN no preference is stored, THE SYSTEM SHALL default to Spanish if the browser language starts with `es`, and English otherwise.
+
+### Requirement 10: Quality, safety, and contest packaging
 
 **User Story:** As the contestant, I want the project to be tested, documented in Kiro's format, and ready to submit, so that the entry is eligible and maintainable under a tight deadline.
 

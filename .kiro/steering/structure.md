@@ -6,7 +6,7 @@ inclusion: always
 
 ```
 .kiro/
-  steering/          Product, stack, and structure guidance (always included)
+  steering/          Product, stack, structure, and visual-style (Phase 3)
   specs/             Feature specs: requirements.md, design.md, tasks.md
   hooks/             Agent hooks (JSON, schema version v1)
 public/
@@ -14,8 +14,12 @@ public/
   manifest.webmanifest
   favicon.svg
 src/
-  parser/            UltraStar file format types, parser, beat timing, tests
+  config/            Brand constants (`APP_NAME`)
+  i18n/              English / Spanish dictionaries and provider
+  parser/            UltraStar file format types, parser, tests
   pitch/             YIN detector, note math, mic hook, tests
+  game/              Timing engine, scoring, simulated singer, tests
+  audio/             Guide-melody hook (Phase 2 stand-in for missing audio)
   ui/                Presentational React components
   songs/             Source copy of demo songs (kept in sync with public/songs)
   App.tsx            Phase shell and composition

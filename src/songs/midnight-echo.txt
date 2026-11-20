@@ -6,7 +6,7 @@
 #LANGUAGE:English
 #YEAR:2026
 #GENRE:Original
-#COMMENT:Original copyright-free demo written for WakeStar (Kiroween 2026). Not based on any existing song.
+#COMMENT:Original copyright-free demo written for GhostNote (Kiroween 2026). Not based on any existing song.
 : 0 4 0 Mid
 : 4 4 2 night
 : 8 8 4  e

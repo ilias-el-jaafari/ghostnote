@@ -1,6 +1,6 @@
 {
-  "name": "WakeStar",
-  "short_name": "WakeStar",
+  "name": "GhostNote",
+  "short_name": "GhostNote",
   "description": "UltraStar karaoke, reborn in the browser. Sing with friends on desktop or mobile.",
   "start_url": "/",
   "display": "standalone",

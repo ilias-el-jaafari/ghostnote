@@ -20,7 +20,22 @@ export {
 export {
   detectPitchYin,
   interpolateTau,
+  localMinimumTau,
+  preferFundamentalTau,
+  shouldPreferLongerPeriod,
+  synthesizeHarmonicTone,
   synthesizeSine,
+  DEFAULT_MAX_PITCH_HZ,
+  DEFAULT_MIN_PITCH_HZ,
+  RECOMMENDED_PITCH_WINDOW,
   type PitchDetectionResult,
   type PitchDetectorOptions,
 } from './yin.ts'
+export {
+  centsBetween,
+  isClosePitch,
+  isOctaveOrHarmonicJump,
+  medianOf,
+  OctaveHysteresis,
+  type OctaveHysteresisOptions,
+} from './smooth.ts'

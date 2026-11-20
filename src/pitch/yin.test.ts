@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { frequencyToMidi } from './note.ts'
-import { detectPitchYin, interpolateTau, synthesizeSine } from './yin.ts'
+import {
+  detectPitchYin,
+  interpolateTau,
+  RECOMMENDED_PITCH_WINDOW,
+  shouldPreferLongerPeriod,
+  synthesizeHarmonicTone,
+  synthesizeSine,
+} from './yin.ts'
 
 const SAMPLE_RATE = 44_100
 const DURATION = 0.25
@@ -139,5 +146,105 @@ describe('detectPitchYin — pure sines at known frequencies', () => {
     })
     expect(result).not.toBeNull()
     expect(result?.frequency).toBeCloseTo(hz, 0)
+  })
+})
+
+describe('shouldPreferLongerPeriod', () => {
+  it('does not fold two already-excellent dips (pure sine at T and 2T)', () => {
+    expect(shouldPreferLongerPeriod(0.0001, 0.00005, 0.15)).toBe(false)
+    expect(shouldPreferLongerPeriod(0.003, 0.0009, 0.15)).toBe(false)
+  })
+
+  it('prefers the longer period when it is a clearly better fit', () => {
+    expect(shouldPreferLongerPeriod(0.13, 0.013, 0.15)).toBe(true)
+    expect(shouldPreferLongerPeriod(0.04, 0.02, 0.15)).toBe(true)
+    expect(shouldPreferLongerPeriod(0.11, 0.10, 0.15)).toBe(true)
+    expect(shouldPreferLongerPeriod(0.11, 0.4, 0.15)).toBe(false)
+  })
+})
+
+describe('detectPitchYin — voice-like tones with a weak fundamental', () => {
+  const SAMPLE = 48_000
+  // Weak F0, strong 2nd and 3rd harmonics — the pattern that used to lock an octave up.
+  const VOICE_PARTIALS = [0.12, 0.85, 0.55, 0.28]
+
+  const cases: { name: string; hz: number }[] = [
+    { name: 'E2 82.4 Hz', hz: 82.4068892282175 },
+    { name: 'A2 110 Hz', hz: 110 },
+    { name: 'E3 164.8 Hz', hz: 164.81377845643496 },
+    { name: 'G3 196 Hz', hz: 195.99771799087463 },
+    { name: 'A3 220 Hz', hz: 220 },
+  ]
+
+  it.each(cases)('returns the fundamental for $name, not an overtone', ({ hz }) => {
+    const samples = synthesizeHarmonicTone(hz, SAMPLE, 0.12, VOICE_PARTIALS)
+    const result = detectPitchYin(samples, {
+      sampleRate: SAMPLE,
+      minFrequency: 70,
+      maxFrequency: 1000,
+    })
+    expect(result, `expected a pitch for ${hz} Hz`).not.toBeNull()
+    if (!result) return
+    const cents = (frequencyToMidi(result.frequency) - frequencyToMidi(hz)) * 100
+    expect(Math.abs(cents), `got ${result.frequency.toFixed(2)} Hz`).toBeLessThan(20)
+    // Must not be an octave (or a 12th) above the fundamental.
+    expect(result.frequency).toBeLessThan(hz * 1.5)
+  })
+
+  it('resolves a low E2 on a 4096-sample / 48 kHz window', () => {
+    const hz = 82.4068892282175
+    const duration = RECOMMENDED_PITCH_WINDOW / SAMPLE
+    expect(RECOMMENDED_PITCH_WINDOW).toBeGreaterThanOrEqual(4096)
+    const samples = synthesizeHarmonicTone(hz, SAMPLE, duration, VOICE_PARTIALS)
+    expect(samples.length).toBe(RECOMMENDED_PITCH_WINDOW)
+    const result = detectPitchYin(samples, {
+      sampleRate: SAMPLE,
+      minFrequency: 70,
+      maxFrequency: 1000,
+    })
+    expect(result).not.toBeNull()
+    const cents = (frequencyToMidi(result!.frequency) - frequencyToMidi(hz)) * 100
+    expect(Math.abs(cents)).toBeLessThan(20)
+  })
+})
+
+function addDeterministicNoise(samples: Float32Array, amplitude: number, seed = 1): Float32Array {
+  let state = seed >>> 0
+  const out = new Float32Array(samples.length)
+  for (let i = 0; i < samples.length; i += 1) {
+    state = (Math.imul(state, 1664525) + 1013904223) >>> 0
+    const noise = (state / 0x100000000) * 2 - 1
+    out[i] = (samples[i] ?? 0) + amplitude * noise
+  }
+  return out
+}
+
+describe('detectPitchYin — H2-dominant voice that would otherwise lock an octave up', () => {
+  const SAMPLE = 48_000
+  // Almost no odd harmonics plus a bit of noise: the first YIN dip is at 2f,
+  // but CMND at the true period is clearly better.
+  const EVEN_HEAVY = [0.05, 1, 0.08, 0.03]
+
+  const cases: { name: string; hz: number }[] = [
+    { name: 'E2 82.4 Hz', hz: 82.4068892282175 },
+    { name: 'A2 110 Hz', hz: 110 },
+    { name: 'E3 164.8 Hz', hz: 164.81377845643496 },
+    { name: 'G3 196 Hz', hz: 195.99771799087463 },
+    { name: 'A3 220 Hz', hz: 220 },
+  ]
+
+  it.each(cases)('recovers the fundamental for $name', ({ hz }) => {
+    const clean = synthesizeHarmonicTone(hz, SAMPLE, 0.12, EVEN_HEAVY)
+    const samples = addDeterministicNoise(clean, 0.16)
+    const result = detectPitchYin(samples, {
+      sampleRate: SAMPLE,
+      minFrequency: 70,
+      maxFrequency: 1000,
+    })
+    expect(result, `expected a pitch for ${hz} Hz`).not.toBeNull()
+    if (!result) return
+    const cents = (frequencyToMidi(result.frequency) - frequencyToMidi(hz)) * 100
+    expect(Math.abs(cents), `got ${result.frequency.toFixed(2)} Hz`).toBeLessThan(25)
+    expect(result.frequency).toBeLessThan(hz * 1.5)
   })
 })

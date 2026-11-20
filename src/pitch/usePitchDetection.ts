@@ -7,8 +7,14 @@ import {
   yinFallbackForSensitivity,
   yinThresholdForSensitivity,
 } from '../audio/mix.ts'
+import { OctaveHysteresis } from './smooth.ts'
 import { frequencyToNoteName, type NamedNote } from './note.ts'
-import { detectPitchYin } from './yin.ts'
+import {
+  DEFAULT_MAX_PITCH_HZ,
+  DEFAULT_MIN_PITCH_HZ,
+  detectPitchYin,
+  RECOMMENDED_PITCH_WINDOW,
+} from './yin.ts'
 
 export type MicStatus =
   | 'idle'
@@ -30,7 +36,7 @@ export type MicErrorCode = 'unsupported' | 'denied' | 'notFound' | 'startFailed'
 /** Default gate at the default sensitivity. Prefer `rmsGateForSensitivity`. */
 export const MIC_MIN_RMS = DEFAULT_MIC_MIN_RMS
 
-const FFT_SIZE = 8192
+const FFT_SIZE = RECOMMENDED_PITCH_WINDOW
 
 function getAudioContextConstructor(): typeof AudioContext | undefined {
   if (typeof window === 'undefined') return undefined
@@ -54,6 +60,7 @@ export function usePitchDetection(sensitivity = DEFAULT_MIC_SENSITIVITY) {
   const analyserRef = useRef<AnalyserNode | undefined>(undefined)
   const frameRef = useRef<number | undefined>(undefined)
   const bufferRef = useRef<Float32Array<ArrayBuffer> | undefined>(undefined)
+  const smootherRef = useRef(new OctaveHysteresis())
 
   useEffect(() => {
     sensitivityRef.current = sensitivity
@@ -77,6 +84,7 @@ export function usePitchDetection(sensitivity = DEFAULT_MIC_SENSITIVITY) {
       await audioRef.current.close().catch(() => undefined)
       audioRef.current = undefined
     }
+    smootherRef.current.reset()
     setLive({ frequency: null, note: null, probability: 0, rms: 0 })
     setStatus('idle')
   }, [stopLoop])
@@ -94,6 +102,7 @@ export function usePitchDetection(sensitivity = DEFAULT_MIC_SENSITIVITY) {
       return
     }
 
+    smootherRef.current.reset()
     setErrorCode(undefined)
     setErrorDetail(undefined)
     setStatus('requesting')
@@ -138,19 +147,20 @@ export function usePitchDetection(sensitivity = DEFAULT_MIC_SENSITIVITY) {
           rawRms >= minRms
             ? detectPitchYin(buffer, {
                 sampleRate: activeContext.sampleRate,
-                minFrequency: 80,
-                maxFrequency: 1000,
+                minFrequency: DEFAULT_MIN_PITCH_HZ,
+                maxFrequency: DEFAULT_MAX_PITCH_HZ,
                 minRms: minRms,
                 threshold: yinThresholdForSensitivity(sensitivityNow),
                 fallbackThreshold: yinFallbackForSensitivity(sensitivityNow),
               })
             : null
 
-        if (result) {
+        const frequency = smootherRef.current.push(result?.frequency ?? null)
+        if (frequency) {
           setLive({
-            frequency: result.frequency,
-            note: frequencyToNoteName(result.frequency),
-            probability: result.probability,
+            frequency,
+            note: frequencyToNoteName(frequency),
+            probability: result?.probability ?? 0,
             rms: rawRms,
           })
         } else {

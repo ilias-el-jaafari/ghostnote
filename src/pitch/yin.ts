@@ -23,10 +23,29 @@ export type PitchDetectorOptions = {
 }
 
 const DEFAULT_THRESHOLD = 0.15
-const DEFAULT_MIN_HZ = 80
-const DEFAULT_MAX_HZ = 1000
+/** Lowest pitch we try to track (about C#2 / a low sung bass note). */
+export const DEFAULT_MIN_PITCH_HZ = 70
+export const DEFAULT_MAX_PITCH_HZ = 1000
+/**
+ * Minimum time-domain window (samples) so YIN can resolve ~70 Hz at 48 kHz.
+ * Two to three periods of 70 Hz is ~1370–2057 samples; 4096 leaves headroom.
+ */
+export const RECOMMENDED_PITCH_WINDOW = 4096
+const DEFAULT_MIN_HZ = DEFAULT_MIN_PITCH_HZ
+const DEFAULT_MAX_HZ = DEFAULT_MAX_PITCH_HZ
 const DEFAULT_MIN_RMS = 0.001
 const DEFAULT_FALLBACK = 0.45
+
+/**
+ * CMND values this small are already "perfect" dips (typical of a pure sine
+ * at T, 2T, and 3T). Never fold those down an octave — 2T/3T can look
+ * slightly deeper just because of the sampling grid.
+ */
+const CLEAN_DIP = 0.01
+/** Prefer a longer period when its CMND is at most this fraction of the short dip. */
+const IMPROVEMENT_RATIO = 0.7
+/** A first dip at or above this is "mediocre" — likely an overtone. */
+const MEDIOCRE_DIP = 0.08
 
 function rmsOf(samples: Float32Array): number {
   let sumSq = 0
@@ -50,6 +69,67 @@ export function interpolateTau(cmnd: Float32Array, tau: number): number {
   const denom = 2 * (2 * s1 - s2 - s0)
   if (denom === 0) return tau
   return tau + (s2 - s0) / denom
+}
+
+/** Walk to the nearest local minimum of `cmnd` around `around`. */
+export function localMinimumTau(
+  cmnd: Float32Array,
+  around: number,
+  tauMin: number,
+  tauMax: number,
+): number {
+  let tau = Math.min(tauMax, Math.max(tauMin, Math.round(around)))
+  while (tau + 1 <= tauMax && (cmnd[tau + 1] ?? 1) < (cmnd[tau] ?? 1)) {
+    tau += 1
+  }
+  while (tau - 1 >= tauMin && (cmnd[tau - 1] ?? 1) < (cmnd[tau] ?? 1)) {
+    tau -= 1
+  }
+  return tau
+}
+
+/**
+ * If the first YIN dip is an overtone (f, 2f, or 3f), prefer the longer
+ * period when its CMND is meaningfully better. Pure sines keep the first
+ * dip: T, 2T and 3T are all near-zero, so a clean short dip is never folded.
+ * Candidates are compared against the current best so 3τ is not chosen
+ * after a strong 2τ (which would land at 3/2 of the true period).
+ */
+export function preferFundamentalTau(
+  cmnd: Float32Array,
+  tau: number,
+  tauMin: number,
+  tauMax: number,
+  threshold: number,
+): number {
+  let best = tau
+  let bestVal = cmnd[tau] ?? 1
+  for (const multiple of [2, 3]) {
+    const expected = tau * multiple
+    if (expected > tauMax) continue
+    const candidate = localMinimumTau(cmnd, expected, tauMin, tauMax)
+    if (Math.abs(candidate - expected) / expected > 0.06) continue
+    const longVal = cmnd[candidate] ?? 1
+    if (shouldPreferLongerPeriod(bestVal, longVal, threshold) && candidate > best) {
+      best = candidate
+      bestVal = longVal
+    }
+  }
+  return best
+}
+
+export function shouldPreferLongerPeriod(
+  shortVal: number,
+  longVal: number,
+  threshold: number,
+): boolean {
+  if (longVal > Math.max(threshold, shortVal)) return false
+  // Both dips are already excellent — keep the first (shortest) period.
+  if (shortVal < CLEAN_DIP && longVal < CLEAN_DIP) return false
+  // Longer period is clearly a better fit (true fundamental).
+  if (longVal <= shortVal * IMPROVEMENT_RATIO) return true
+  // Mediocre first dip with a still-acceptable longer dip.
+  return shortVal >= MEDIOCRE_DIP && longVal <= threshold && longVal <= shortVal * 1.2
 }
 
 /**
@@ -118,6 +198,8 @@ export function detectPitchYin(
     if (minVal > fallbackThreshold) return null
   }
 
+  tauEstimate = preferFundamentalTau(cmnd, tauEstimate, tauMin, tauMax, threshold)
+
   const betterTau = interpolateTau(cmnd, tauEstimate)
   if (!(betterTau > 0)) return null
   const frequency = sampleRate / betterTau
@@ -142,6 +224,31 @@ export function synthesizeSine(
   const out = new Float32Array(n)
   for (let i = 0; i < n; i += 1) {
     out[i] = amplitude * Math.sin((2 * Math.PI * frequency * i) / sampleRate + phase)
+  }
+  return out
+}
+
+/**
+ * Additive harmonic tone for tests. `harmonicAmplitudes[0]` is the
+ * fundamental, `[1]` the 2nd harmonic, and so on.
+ */
+export function synthesizeHarmonicTone(
+  fundamental: number,
+  sampleRate: number,
+  durationSeconds: number,
+  harmonicAmplitudes: readonly number[],
+  phase = 0,
+): Float32Array {
+  const n = Math.max(0, Math.floor(sampleRate * durationSeconds))
+  const out = new Float32Array(n)
+  for (let i = 0; i < n; i += 1) {
+    let sample = 0
+    for (let h = 0; h < harmonicAmplitudes.length; h += 1) {
+      const amplitude = harmonicAmplitudes[h] ?? 0
+      if (amplitude === 0) continue
+      sample += amplitude * Math.sin((2 * Math.PI * fundamental * (h + 1) * i) / sampleRate + phase)
+    }
+    out[i] = sample
   }
   return out
 }

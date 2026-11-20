@@ -31,3 +31,6 @@ blob-report
 
 # Local screenshot debug
 screenshots/**/*.diff.png
+
+# Local visual references (not part of the published tree)
+design-refs/

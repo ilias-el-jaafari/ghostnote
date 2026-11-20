@@ -37,6 +37,8 @@ export type SessionOptions = {
   simulated?: boolean
   noiseCents?: number
   seekMs?: number
+  /** When the backing track is playing, prefer its currentTime as the game clock. */
+  getMediaTimeMs?: () => number | undefined
 }
 
 function micSample(live: LivePitch | undefined): SingerSample {
@@ -167,7 +169,14 @@ export function useGameSession(
     originRef.current = performance.now() - timeRef.current
     let frame = 0
     const loop = () => {
-      const next = performance.now() - originRef.current
+      let next = performance.now() - originRef.current
+      if (next >= 0) {
+        const media = optionsRef.current.getMediaTimeMs?.()
+        if (media !== undefined && media >= 0) {
+          next = media
+          originRef.current = performance.now() - next
+        }
+      }
       const previous = appliedUntilRef.current
       if (next > previous) {
         applyFrom(

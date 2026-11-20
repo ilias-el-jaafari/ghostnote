@@ -1,0 +1,27 @@
+#TITLE:Sky Capsule
+#ARTIST:The Hovering Lights
+#BPM:128
+#GAP:200
+#MP3:sky-capsule.ogg
+#LANGUAGE:English
+#YEAR:2026
+#GENRE:Original
+#COMMENT:Original copyright-free demo written for GhostNote (Kiroween 2026). Not based on any existing song.
+: 0 4 0 Launch
+: 4 4 3  in
+: 8 8 7 to
+: 16 8 8  blue
+- 28
+: 32 4 5 Soft
+: 36 4 7  and
+* 40 8 12  bright
+- 52
+: 60 4 0 Hold
+: 64 4 5  the
+: 68 8 7  line
+- 80
+: 88 4 3 Fly
+: 92 4 5  with
+: 96 4 7  me
+* 100 16 8  home
+E

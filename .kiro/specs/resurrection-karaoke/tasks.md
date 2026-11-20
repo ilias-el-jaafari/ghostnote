@@ -55,7 +55,7 @@ Tasks are grouped by phase. Do not start the next phase until the current phase 
 
 Follow `.kiro/steering/visual-style.md`. Do not ship a flat or minimalist look.
 
-- [ ] 9. Apply the Frutiger Aero / Aqua Gloss + 2000s rhythm-HUD theme
+- [x] 9. Apply the Frutiger Aero / Aqua Gloss + 2000s rhythm-HUD theme
   - GLSL / WebGL MilkDrop-style background (soft fractals, translucent moving geometry)
   - Glossy 3D capsule bars and buttons: top-45% white reflection, bevel, inset box-shadow
   - Additive particles and lens flares (`lighter` / AdditiveBlending)
@@ -64,7 +64,7 @@ Follow `.kiro/steering/visual-style.md`. Do not ship a flat or minimalist look.
   - Performance fallbacks: reduced shader quality on low-end phones, `prefers-reduced-motion`, CSS Aero fallback without WebGL
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8_
 
-- [ ] 10. Song library with demo audio and custom-file loading
+- [x] 10. Song library with demo audio and custom-file loading
   - Ship original, copyright-free demo audio next to the charts
   - Let the user load their own `.txt` plus audio
   - Explain missing audio without blocking lyrics

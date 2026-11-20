@@ -10,7 +10,7 @@ inclusion: always
   specs/             Feature specs: requirements.md, design.md, tasks.md
   hooks/             Agent hooks (JSON, schema version v1)
 public/
-  songs/             Demo UltraStar .txt files served as static assets
+  songs/             Demo UltraStar .txt files, original .ogg audio, ATTRIBUTION.md
   manifest.webmanifest
   favicon.svg
 src/
@@ -19,7 +19,9 @@ src/
   parser/            UltraStar file format types, parser, tests
   pitch/             YIN detector, note math, mic hook, tests
   game/              Timing engine, scoring, simulated singer, tests
-  audio/             Guide-melody hook (Phase 2 stand-in for missing audio)
+  audio/             Guide melody and backing-track playback + analyser
+  visual/            Quality detection, MilkDrop renderer, particles, intro
+  library/           Demo catalog and chart/audio pairing
   ui/                Presentational React components
   songs/             Source copy of demo songs (kept in sync with public/songs)
   App.tsx            Phase shell and composition

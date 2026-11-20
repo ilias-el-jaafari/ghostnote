@@ -2,9 +2,9 @@
 
 A modern web revival of [UltraStar](https://usdx.eu/) karaoke, built as a Kiroween 2026 entry in the **Resurrection** category.
 
-GhostNote reads UltraStar `.txt` songs, listens to the microphone in the browser, and (from Phase 2) scores the singer in real time. It is meant for a party with friends and is designed to work as well on a phone as on a laptop.
+GhostNote reads UltraStar `.txt` songs, plays a backing track, listens to the microphone in the browser, and scores the singer in real time. It is meant for a party with friends and is designed to work as well on a phone as on a laptop.
 
-**Phase 2 is implemented:** parse a song, test the mic, sing a round (guide melody or silent clock), and see a score out of 10000. The Frutiger Aero visual theme, demo audio, party/phones-as-mics mode, and the optional ghost verdict come later. See `.kiro/specs/resurrection-karaoke/tasks.md`.
+**Phase 3 is implemented:** a Frutiger Aero / Aqua Gloss stage (MilkDrop-style WebGL background, glossy capsules, additive particles, AnalyserNode waveform), a song library with three original demo tracks, and loading your own `.txt` + audio. Party/phones-as-mics mode and the optional ghost verdict come later. See `.kiro/specs/resurrection-karaoke/tasks.md`. The public deploy URL is not published yet — confirm the host first.
 
 The product name is the `APP_NAME` constant in `src/config/brand.ts`. The UI is English and Spanish (language selector, remembered in `localStorage`).
 
@@ -18,7 +18,15 @@ npm run dev
 
 Then open the URL Vite prints (usually `http://localhost:5173`). On a phone, use the same machine's local IP over HTTP only if the browser allows microphone access; otherwise use HTTPS or a tunnel. Chrome and Safari require a user tap before the microphone can start.
 
-Add `?sim=1` to drive a development-only simulated singer (optional `&t=6000` to seek, `&screen=results` to jump to a perfect simulated result).
+Useful query flags:
+
+- `?sim=1` — development-only simulated singer
+- `&t=6000` — seek to 6000 ms (song time)
+- `&screen=results` — jump to a perfect simulated result
+- `&visual=high|medium|low|static` — force the visual quality tier
+- `&intro=0` — skip the wake-up intro
+
+The guide melody is on by default and can be muted on the sing screen.
 
 ### Scripts
 
@@ -30,11 +38,13 @@ Add `?sim=1` to drive a development-only simulated singer (optional `&t=6000` to
 | `npm run build` | Typecheck and production build |
 | `npm run preview` | Serve the production build |
 
-## Demo song
+Regenerate the bundled demo audio with `node scripts/render-demo-audio.mjs` (requires ffmpeg).
 
-`public/songs/midnight-echo.txt` is an original, copyright-free chart written for this project. It is not based on any existing song. Audio for the demo will be added in Phase 3; Phase 1 only needs the text.
+## Demo songs
 
-You can also load your own UltraStar `.txt` files from the page. Do not add copyrighted commercial recordings to this repository.
+`public/songs/` ships three original, copyright-free charts and synthesized `.ogg` backing tracks. See `public/songs/ATTRIBUTION.md`. They are not based on any existing song.
+
+You can also load your own UltraStar `.txt` files plus audio (multi-file picker, folder picker, or drag-and-drop). If audio is missing, lyrics stay visible and you can still sing with the guide melody. Do not add copyrighted commercial recordings to this repository.
 
 ## How the format is read
 
@@ -57,10 +67,13 @@ src/i18n/       English and Spanish UI copy
 src/parser/     UltraStar parser and tests
 src/pitch/      YIN detector, note math, microphone hook
 src/game/       Timing, scoring, simulated singer
-src/ui/         Home, sing, and results screens
-public/songs/   Demo charts
+src/audio/      Guide melody and song-audio playback
+src/visual/     Quality tiers, MilkDrop shader, particles
+src/library/    Demo catalog and chart/audio file pairing
+src/ui/         Library, sing, and results screens
+public/songs/   Demo charts and original .ogg audio
 ```
 
 ## License and contest
 
-Code in this repository is for Ilias El Jaafari El Idrissi's Kiroween 2026 submission. The demo lyrics are original and may be reused with the project. This repository has no remote yet; it will be published as a public GitHub repo before the deadline of **4 December 2026, 23:00 Europe/Madrid**.
+Code in this repository is for Ilias El Jaafari El Idrissi's Kiroween 2026 submission. The demo lyrics and audio are original and may be reused with the project. This repository has no remote yet; it will be published as a public GitHub repo before the deadline of **4 December 2026, 23:00 Europe/Madrid**.

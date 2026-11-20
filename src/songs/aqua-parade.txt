@@ -1,0 +1,27 @@
+#TITLE:Aqua Parade
+#ARTIST:Glass Cabinet
+#BPM:100
+#GAP:0
+#MP3:aqua-parade.ogg
+#LANGUAGE:English
+#YEAR:2026
+#GENRE:Original
+#COMMENT:Original copyright-free demo written for GhostNote (Kiroween 2026). Not based on any existing song.
+: 0 4 0 Walk
+: 4 4 2  the
+: 8 8 4  wa
+: 16 8 7 ter
+- 28
+: 32 4 4 Glass
+: 36 4 5  and
+: 40 4 7  sky
+* 44 8 9 light
+- 56
+: 64 4 0 Bub
+: 68 4 4 bles
+: 72 8 7  rise
+- 84
+: 88 4 2 to
+: 92 4 4  the
+* 96 12 7  sun
+E

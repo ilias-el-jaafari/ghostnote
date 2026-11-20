@@ -109,12 +109,12 @@ Microphone audio is processed locally and never uploaded for detection or scorin
 
 - `src/game/timing.ts` converts beats ↔ milliseconds with the same v1/v2 BPM rule as the parser, and builds a per-voice `SongTimeline`.
 - Scoring follows UltraStar Deluxe tradition: 9000 points for notes + 1000 line bonus = 10000. Note weight is `duration × factor` (regular/rap 1×, golden/golden-rap 2×, freestyle 0). Each beat-length fragment is a hit if at least 50% of it was sung correctly (octave-tolerant, 50 cents). Line bonus is split equally across scorable lines and awarded in proportion to that line's hit weight.
-- Until real audio ships (Phase 3), a round can run on a silent clock plus an optional synthesized guide melody (`src/audio/useGuideMelody.ts`).
+- A round prefers the media element clock once backing audio is playing, and falls back to `performance.now()`. A quiet synthesized guide melody (`src/audio/useGuideMelody.ts`) stays on by default and is mutable.
 - A dev-only simulated singer (`simulatedSampleAt`, `?sim=1`) feeds the expected pitch, with optional noise, for headless tests and screenshots.
 
 ## Phase 3 visual system
 
-Do not implement this look until Phase 3. Follow `.kiro/steering/visual-style.md` exactly:
+Follow `.kiro/steering/visual-style.md` exactly:
 
 - Background: a fullscreen WebGL GLSL fragment shader in Winamp MilkDrop style (soft fractals, translucent moving geometry).
 - Chrome: glossy 3D capsules, top-45% white reflection, bevel, inset box-shadow. HUD plates are `rgba` black with a thin bright top border.
@@ -128,7 +128,7 @@ Phones-as-microphones is required, not optional.
 
 - The host (TV or laptop) starts a room and shows a short room code plus a QR code.
 - A phone joins as a mic, runs YIN locally, and sends compact pitch / presence / score updates in real time. Raw audio stays on the phone.
-- Transport: WebRTC data channels or WebSockets, with a small relay for signalling and/or message fan-out. Do not build a larger backend than that.
+- Transport: WebRTC data channels or WebSockets, with a small **free-tier hosted relay** for signalling and/or message fan-out (exact host decided later). Do not build a larger backend than that.
 - The host renders the highway, lyrics, scoreboard, and (in Phase 3) the shader stage. Local one-device play still works when no phone joins.
 
 ## Deployment (Phase 3)

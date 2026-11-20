@@ -26,16 +26,16 @@ export function ResultsScreen({
   return (
     <div className="results">
       <header className="results-top">
-        <p className="eyebrow">{APP_NAME}</p>
+        <p className="eyebrow outlined">{APP_NAME}</p>
         <LanguageSwitcher />
       </header>
-      <p className="results-track">
+      <p className="results-track outlined">
         {artist} — {title}
       </p>
-      <h1 className="results-heading">{t('results.title')}</h1>
-      <p className="results-grade">{t(result.grade)}</p>
+      <h1 className="results-heading outlined">{t('results.title')}</h1>
+      <p className="results-grade outlined">{t(result.grade)}</p>
       <p className="results-total">
-        <span className="results-total-value">{result.totalRounded.toLocaleString()}</span>
+        <span className="results-total-value outlined">{result.totalRounded.toLocaleString()}</span>
         <span className="results-total-max">{t('sing.ofMax', { max: MAX_SCORE })}</span>
       </p>
       {result.totalRounded >= MAX_SCORE ? (
@@ -43,7 +43,7 @@ export function ResultsScreen({
       ) : null}
       {simulated ? <p className="results-sim">{t('results.simulated')}</p> : null}
 
-      <dl className="results-breakdown">
+      <dl className="results-breakdown hud-panel">
         <div>
           <dt>{t('results.notes')}</dt>
           <dd>

@@ -1,21 +1,36 @@
 :root {
-  --bg: #07090a;
-  --bg-elevated: #10151a;
-  --bg-elevated-2: #171e24;
-  --text: #c9d4cc;
-  --text-h: #f3faf5;
-  --muted: #8a9a8e;
-  --accent: #7cff9b;
-  --accent-dim: rgba(124, 255, 155, 0.14);
-  --accent-border: rgba(124, 255, 155, 0.45);
-  --gold: #ffd56a;
-  --danger: #ff6b6b;
-  --danger-dim: rgba(255, 107, 107, 0.14);
-  --border: #24302a;
-  --shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+  --bg: #062433;
+  --bg-elevated: rgba(0, 0, 0, 0.55);
+  --bg-elevated-2: rgba(4, 16, 28, 0.72);
+  --text: #e7f6ff;
+  --text-h: #ffffff;
+  --muted: #c3dce8;
+  --accent: #7ef0ff;
+  --accent-dim: rgba(80, 230, 255, 0.22);
+  --accent-border: rgba(180, 255, 255, 0.55);
+  --lime: #9cff7a;
+  --ghost: #c6ffd8;
+  --gold: #ffe27a;
+  --danger: #ff7a7a;
+  --danger-dim: rgba(255, 90, 90, 0.22);
+  --warn: #ffe09a;
+  --warn-dim: rgba(255, 210, 100, 0.18);
+  --border: rgba(180, 230, 255, 0.28);
+  --hud: rgba(0, 0, 0, 0.55);
+  --hud-edge: rgba(210, 255, 255, 0.92);
+  --shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -10px 18px rgba(0, 0, 0, 0.28),
+    0 10px 28px rgba(0, 0, 0, 0.38);
   --radius: 18px;
-  --sans: 'Outfit', system-ui, 'Segoe UI', sans-serif;
-  --mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+  --sans: Tahoma, Verdana, 'Segoe UI', 'Trebuchet MS', sans-serif;
+  --mono: 'Lucida Console', 'Courier New', ui-monospace, monospace;
+  --outline:
+    -1px -1px 0 #000,
+    1px -1px 0 #000,
+    -1px 1px 0 #000,
+    1px 1px 0 #000,
+    0 0 4px #000;
   color-scheme: dark;
   font: 16px/1.5 var(--sans);
   color: var(--text);
@@ -34,18 +49,21 @@ body {
   margin: 0;
   min-height: 100%;
   background:
-    radial-gradient(1200px 500px at 50% -10%, rgba(124, 255, 155, 0.08), transparent 50%),
-    var(--bg);
+    radial-gradient(circle at 18% 12%, rgba(150, 230, 255, 0.5), transparent 42%),
+    radial-gradient(circle at 82% 8%, rgba(170, 255, 190, 0.32), transparent 40%),
+    radial-gradient(circle at 50% 88%, rgba(30, 110, 170, 0.55), transparent 52%),
+    linear-gradient(180deg, #63c7ea 0%, #1578a8 46%, #062433 100%);
 }
 
 #root {
   min-height: 100svh;
+  position: relative;
 }
 
 h1,
 h2,
 h3 {
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-h);
   margin: 0;
 }
@@ -58,4 +76,48 @@ label {
 
 button {
   touch-action: manipulation;
+}
+
+.outlined {
+  text-shadow: var(--outline);
+}
+
+.stage-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.stage-bg-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.stage-bg-fallback {
+  background:
+    radial-gradient(circle at 20% 20%, rgba(140, 225, 255, 0.55), transparent 42%),
+    radial-gradient(circle at 80% 16%, rgba(160, 255, 180, 0.35), transparent 40%),
+    linear-gradient(180deg, #4eb7e0 0%, #0d5e82 55%, #041820 100%);
+}
+
+.hud-panel {
+  background: var(--hud);
+  border: 1px solid var(--border);
+  border-top: 1px solid var(--hud-edge);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(8px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

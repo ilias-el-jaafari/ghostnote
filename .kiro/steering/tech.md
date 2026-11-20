@@ -7,9 +7,9 @@ inclusion: always
 ## Application
 
 - React 19 + TypeScript, bundled with Vite.
-- Plain CSS for Phase 1–2. Phase 3 adds a WebGL GLSL background (MilkDrop-style) and Canvas/WebGL additive particles as described in `visual-style.md`; no new UI framework without asking.
+- Plain CSS plus a WebGL GLSL MilkDrop-style background and Canvas 2D additive particles, as described in `visual-style.md`. No new UI framework without asking. Low-end and `prefers-reduced-motion` fallbacks are required.
 - Lightweight i18n in `src/i18n` (English and Spanish). The display name is `APP_NAME` in `src/config/brand.ts`.
-- Client-only through Phase 3. Phase 4 needs a small relay (WebSocket or WebRTC signalling) so phones can join a host screen; keep it isolated from scoring math. Avatar generation in Phase 5 stays optional.
+- Client-only through Phase 3. Phase 4 needs a small free-tier hosted relay (WebSocket or WebRTC signalling; exact host decided later) so phones can join a host screen; keep it isolated from scoring math. Avatar generation in Phase 5 stays optional.
 
 ## Domain logic
 

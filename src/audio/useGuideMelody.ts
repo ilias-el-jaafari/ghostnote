@@ -8,12 +8,14 @@ function getAudioContextConstructor(): typeof AudioContext | undefined {
 
 /**
  * Play a quiet synthesized guide tone for the current chart note.
- * Used in Phase 2 because demo audio is not shipped yet.
+ * Quiet pitch cue. Stays on by default; the caller may lower the gain when
+ * a real backing track is already playing.
  */
 export function useGuideMelody(
   timeline: SongTimeline | undefined,
   timeMs: number,
   enabled: boolean,
+  gainLevel = 0.07,
 ) {
   const ctxRef = useRef<AudioContext | undefined>(undefined)
   const oscRef = useRef<OscillatorNode | undefined>(undefined)
@@ -62,9 +64,9 @@ export function useGuideMelody(
     const now = context.currentTime
     if (frequency !== undefined) {
       oscillator.frequency.setTargetAtTime(frequency, now, 0.01)
-      gain.gain.setTargetAtTime(0.07, now, 0.02)
+      gain.gain.setTargetAtTime(gainLevel, now, 0.02)
     } else {
       gain.gain.setTargetAtTime(0, now, 0.03)
     }
-  }, [enabled, timeMs, timeline])
+  }, [enabled, gainLevel, timeMs, timeline])
 }

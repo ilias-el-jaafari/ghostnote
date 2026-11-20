@@ -70,8 +70,9 @@ Follow `.kiro/steering/visual-style.md`. Do not ship a flat or minimalist look.
   - Explain missing audio without blocking lyrics
   - _Requirements: 6.1, 6.2, 6.3, 6.4_
 
-- [ ] 11. Deploy a public static build and confirm the live URL
-  - Ask Ilias which host to use before publishing
+- [x] 11. Deploy a public static build and confirm the live URL
+  - Public repo: https://github.com/ilias-el-jaafari/ghostnote
+  - Live site: https://ilias-el-jaafari.github.io/ghostnote/
   - _Requirements: 4.3, 10.3_
 
 ## Phase 4 — Party features (including phones as mics)

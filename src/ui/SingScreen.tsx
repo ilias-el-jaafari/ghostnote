@@ -33,6 +33,7 @@ import {
   readSongOffset,
   songOffsetKey,
 } from '../youtube/offsets.ts'
+import { NUDGE_LARGE_MS, NUDGE_SMALL_MS } from '../youtube/tapSync.ts'
 import { useYouTubePlayer } from '../youtube/useYouTubePlayer.ts'
 
 type SingScreenProps = {
@@ -179,6 +180,29 @@ export function SingScreen({
       typeof window === 'undefined' ? undefined : window.localStorage,
     )
   }
+
+  useEffect(() => {
+    if (!useYoutube) return
+    const onKey = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+        return
+      }
+      if (event.key !== '[' && event.key !== ']') return
+      event.preventDefault()
+      const step = event.shiftKey ? NUDGE_LARGE_MS : NUDGE_SMALL_MS
+      const next = event.key === ']' ? offsetMs + step : offsetMs - step
+      const clamped = clampOffsetMs(next)
+      setOffsetMs(clamped)
+      persistSongOffset(
+        offsetKey,
+        clamped,
+        typeof window === 'undefined' ? undefined : window.localStorage,
+      )
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [offsetKey, offsetMs, useYoutube])
 
   const hitting = activeNotes(timeline, timeMs).some((note) => {
     if (note.type === 'freestyle') return false

@@ -29,6 +29,7 @@ The visual look — four switchable 2000s themes (Kaleido, Aqua Bubble, Neon Gal
 - Live note highway, AnalyserNode spectrum HUD, and a guide melody (on by default, can be muted)
 - Four switchable 2000s visual themes, plus a “random each song” option (remembered in `localStorage`)
 - YouTube as a backing-track source (official IFrame Player, no downloading): paste a URL or auto-detect `#VIDEO:v=` / `a=` (USDB-style). A Winamp-like mini player keeps the video visible at 200×200 CSS pixels.
+- Instrumental / karaoke source: on load, GhostNote searches YouTube for `<artist> <title> karaoke instrumental`, compares each candidate’s duration to the original `#VIDEO` (or the chart length plus a short outro), and auto-selects a match within 1 second. Search uses an optional YouTube Data API v3 key kept in `localStorage`, then public Invidious and Piped instances (timeouts + failover). If every provider fails, use “Find instrumental on YouTube” and paste a URL. Tap-sync and `[` / `]` nudges are there when lengths differ.
 - English / Spanish UI
 
 Party/phones-as-mics mode and the optional ghost verdict are planned, not shipped yet. See [`.kiro/specs/resurrection-karaoke/tasks.md`](.kiro/specs/resurrection-karaoke/tasks.md).
@@ -55,6 +56,7 @@ Useful query flags:
 - `&theme=kaleido|aqua|galaxy|laser|random` — lock the visual theme
 - `&yt=VIDEO_ID` — attach a YouTube video to the current song
 - `&ytmock=1` — show the mini player with a local mock (for screenshots / tests)
+- `&source=instrumental` — open the start card on the instrumental / karaoke source
 
 ### Scripts
 

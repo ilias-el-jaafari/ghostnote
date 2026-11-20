@@ -11,6 +11,15 @@ import {
 import { useI18n } from './i18n/index.ts'
 import { loadBuiltinSongs, type LoadedSong } from './library/index.ts'
 import { parseYouTubeUrl } from './youtube/ids.ts'
+import {
+  defaultSource,
+  persistInstrumentalId,
+  persistSourcePreference,
+  readInstrumentalId,
+  readSourcePreference,
+  songIdentityKey,
+  type AudioSourceKind,
+} from './youtube/instrumentals.ts'
 import { ResultsScreen } from './ui/ResultsScreen.tsx'
 import { SingScreen } from './ui/SingScreen.tsx'
 import { LibraryScreen } from './ui/LibraryScreen.tsx'
@@ -30,11 +39,12 @@ type PlayFlags = {
   autoplay: boolean
   ytMock: boolean
   ytId: string | undefined
+  source: AudioSourceKind | undefined
 }
 
 function readPlayFlags(): PlayFlags {
   if (typeof window === 'undefined') {
-    return { sim: false, seekMs: undefined, skipToResults: false, autoplay: false, ytMock: false, ytId: undefined }
+    return { sim: false, seekMs: undefined, skipToResults: false, autoplay: false, ytMock: false, ytId: undefined, source: undefined }
   }
   const params = new URLSearchParams(window.location.search)
   const sim = params.get('sim') === '1' || params.get('sim') === 'true'
@@ -45,7 +55,10 @@ function readPlayFlags(): PlayFlags {
   const autoplay = params.get('autoplay') === '1' || skipToResults || seekMs !== undefined
   const ytMock = params.get('ytmock') === '1' || params.get('ytmock') === 'true'
   const ytId = parseYouTubeUrl(params.get('yt') ?? '')
-  return { sim, seekMs, skipToResults, autoplay, ytMock, ytId }
+  const sourceParam = params.get('source')
+  const source: AudioSourceKind | undefined =
+    sourceParam === 'instrumental' || sourceParam === 'original' ? sourceParam : undefined
+  return { sim, seekMs, skipToResults, autoplay, ytMock, ytId, source }
 }
 
 function perfectSimResult(song: LoadedSong['song']): RoundResult {
@@ -72,19 +85,42 @@ export default function App() {
   const [seekMs, setSeekMs] = useState(flags.seekMs)
   const [guideMuted, setGuideMuted] = useState(false)
   const mix = useAudioMix()
-  const [youtubeOverrides, setYoutubeOverrides] = useState<Record<string, string>>({})
+  const [sourceRev, setSourceRev] = useState(0)
   const songs = useMemo(() => [...builtin, ...userSongs], [builtin, userSongs])
   const selectedBase = songs.find((song) => song.id === selectedId) ?? songs[0]
+  const storage = typeof window === 'undefined' ? undefined : window.localStorage
+  const identity = selectedBase
+    ? songIdentityKey(selectedBase.song.headers.artist, selectedBase.song.headers.title)
+    : ''
+  // sourceRev is the cache-buster after localStorage writes.
+  void sourceRev
+  const savedInstrumental = identity ? readInstrumentalId(identity, storage) : undefined
+  const instrumentalId = savedInstrumental ?? flags.ytId
+  const audioSource: AudioSourceKind =
+    flags.source ??
+    defaultSource({
+      saved: identity ? readSourcePreference(identity, storage) : undefined,
+      instrumentalId,
+      hasLocalAudio: Boolean(selectedBase?.audioUrl),
+    })
   const selected = selectedBase
     ? {
         ...selectedBase,
+        audioUrl: audioSource === 'instrumental' ? undefined : selectedBase.audioUrl,
+        audioMissing:
+          audioSource === 'instrumental'
+            ? !instrumentalId && !flags.ytMock
+            : selectedBase.audioMissing && !selectedBase.youtubeId && !flags.ytMock,
         youtubeId:
-          youtubeOverrides[selectedBase.id] ??
-          flags.ytId ??
-          selectedBase.youtubeId,
-        youtubeFromHeader: youtubeOverrides[selectedBase.id] || flags.ytId
-          ? false
-          : selectedBase.youtubeFromHeader,
+          audioSource === 'instrumental'
+            ? instrumentalId
+            : selectedBase.audioUrl
+              ? undefined
+              : (flags.ytId ?? selectedBase.youtubeId),
+        youtubeFromHeader:
+          audioSource === 'original' && !selectedBase.audioUrl && !flags.ytId
+            ? selectedBase.youtubeFromHeader
+            : false,
       }
     : undefined
   const [result, setResult] = useState<RoundResult | undefined>(() =>
@@ -114,14 +150,24 @@ export default function App() {
     setView('results')
   }, [])
 
-  const onYouTubeSource = useCallback((songId: string, videoId: string | undefined) => {
-    setYoutubeOverrides((current) => {
-      const next = { ...current }
-      if (videoId) next[songId] = videoId
-      else delete next[songId]
-      return next
-    })
-  }, [])
+  const onSourceChange = useCallback(
+    (source: AudioSourceKind) => {
+      if (!identity) return
+      persistSourcePreference(identity, source, storage)
+      setSourceRev((value) => value + 1)
+    },
+    [identity, storage],
+  )
+
+  const onInstrumentalId = useCallback(
+    (videoId: string | undefined) => {
+      if (!identity) return
+      persistInstrumentalId(identity, videoId, storage)
+      persistSourcePreference(identity, 'instrumental', storage)
+      setSourceRev((value) => value + 1)
+    },
+    [identity, storage],
+  )
 
   const onAddSongs = useCallback((incoming: LoadedSong[]) => {
     setUserSongs((current) => [...current, ...incoming])
@@ -205,7 +251,11 @@ export default function App() {
         micSensitivity={mix.micSensitivity}
         onGuideVolume={mix.setGuideVolume}
         onMicSensitivity={mix.setMicSensitivity}
-        onYouTubeSource={onYouTubeSource}
+        audioSource={audioSource}
+        instrumentalId={instrumentalId}
+        mockYoutube={flags.ytMock}
+        onSourceChange={onSourceChange}
+        onInstrumentalId={onInstrumentalId}
       />
     </>
   )

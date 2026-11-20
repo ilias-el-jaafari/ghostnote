@@ -131,14 +131,13 @@ export function YouTubeMiniPlayer({
             />
           </label>
 
-          <div className="yt-offset">
+          <div className="yt-offset" aria-label={t('instrumental.nudge')}>
             <span className="yt-offset-label outlined">{t('youtube.offset')}</span>
-            <button
-              type="button"
-              className="btn btn-ghost btn-compact"
-              onClick={() => onOffsetChange(offsetMs - 50)}
-            >
+            <button type="button" className="btn btn-ghost btn-compact" onClick={() => onOffsetChange(offsetMs - 50)}>
               −50
+            </button>
+            <button type="button" className="btn btn-ghost btn-compact" onClick={() => onOffsetChange(offsetMs - 10)}>
+              −10
             </button>
             <input
               id={offsetId}
@@ -150,15 +149,15 @@ export function YouTubeMiniPlayer({
               aria-label={t('youtube.offset')}
               onChange={(event) => onOffsetChange(Number(event.target.value))}
             />
-            <button
-              type="button"
-              className="btn btn-ghost btn-compact"
-              onClick={() => onOffsetChange(offsetMs + 50)}
-            >
+            <button type="button" className="btn btn-ghost btn-compact" onClick={() => onOffsetChange(offsetMs + 10)}>
+              +10
+            </button>
+            <button type="button" className="btn btn-ghost btn-compact" onClick={() => onOffsetChange(offsetMs + 50)}>
               +50
             </button>
             <span className="yt-offset-value outlined">{offsetMs} ms</span>
           </div>
+          <p className="yt-mini-hint">{t('instrumental.nudgeHint')}</p>
 
           {fromHeader ? <p className="yt-mini-hint">{t('youtube.fromHeader')}</p> : null}
           {player.needsTap ? (

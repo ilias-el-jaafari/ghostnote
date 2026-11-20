@@ -1713,10 +1713,15 @@
 }
 
 .yt-offset {
-  display: grid;
-  grid-template-columns: auto auto 1fr auto auto;
+  display: flex;
+  flex-wrap: wrap;
   gap: 6px;
   align-items: center;
+}
+
+.yt-offset input[type='range'] {
+  flex: 1 1 80px;
+  min-width: 80px;
 }
 
 .yt-offset-label,
@@ -1771,4 +1776,179 @@
     animation: none;
     height: 50%;
   }
+}
+
+
+/* Instrumental / karaoke source setup ----------------------------------- */
+
+.instrumental-setup {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.source-picker {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.source-picker legend {
+  margin-bottom: 4px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.source-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+}
+
+.source-option.is-selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.source-option small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.instrumental-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.length-badge {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.length-badge.is-match {
+  background: rgba(61, 255, 90, 0.16);
+  border: 1px solid #3dff5a;
+}
+
+.length-badge.is-diff {
+  background: rgba(255, 225, 74, 0.14);
+  border: 1px solid var(--warn);
+}
+
+.length-badge-title {
+  display: block;
+  font-weight: 500;
+  font-size: 0.78rem;
+  margin-top: 2px;
+}
+
+.instrumental-candidates {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.instrumental-candidates-label {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.candidate {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.candidate.is-selected {
+  border-color: var(--accent);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.candidate-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.85rem;
+}
+
+.candidate-meta {
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.tap-sync {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tap-sync h3 {
+  margin: 0;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.tap-sync-controls,
+.tap-sync-nudge,
+.sing-nudge {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.tap-sync-now {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #ffe14a;
+  text-align: center;
+}
+
+.tap-sync-count {
+  margin: 0;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.instrumental-advanced {
+  font-size: 0.8rem;
+}
+
+.instrumental-advanced input {
+  width: 100%;
+  margin-top: 6px;
+}
+
+.sing-nudge-hint {
+  font-size: 0.7rem;
+  color: var(--muted);
 }

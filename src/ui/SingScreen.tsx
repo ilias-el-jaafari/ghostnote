@@ -6,7 +6,6 @@ import {
   currentSyllableIndex,
   HIT_TOLERANCE_CENTS,
   lineAt,
-  MAX_SCORE,
   nextLine,
   simulatedSampleAt,
   type RoundResult,
@@ -16,6 +15,12 @@ import type { ParsedSong } from '../parser/index.ts'
 import { comparePitchOctaveTolerant, frequencyToMidi, ultraStarPitchToMidi } from '../pitch/index.ts'
 import { MIC_MIN_RMS, usePitchDetection } from '../pitch/usePitchDetection.ts'
 import type { QualitySettings } from '../visual/quality.ts'
+import {
+  formatCabinetScore,
+  formatClock,
+  progressRatio,
+  type ThemeId,
+} from '../visual/themes.ts'
 import { NoteHighway } from './NoteHighway.tsx'
 import { useGameSession, type SessionOptions } from './useGameSession.ts'
 import { Waveform } from './Waveform.tsx'
@@ -27,6 +32,7 @@ type SingScreenProps = {
   options: SessionOptions
   guideMuted: boolean
   visual: QualitySettings
+  themeId: ThemeId
   onToggleGuide: () => void
   onExit: () => void
   onFinished: (result: RoundResult) => void
@@ -39,6 +45,7 @@ export function SingScreen({
   options,
   guideMuted,
   visual,
+  themeId,
   onToggleGuide,
   onExit,
   onFinished,
@@ -114,8 +121,18 @@ export function SingScreen({
     ).match
   })
 
+  const timeStart = -timeline.countInMs
+  const ratio = progressRatio(timeMs, timeStart, timeline.endMs)
+  const accuracyPct = Math.round(snapshot.accuracy * 100)
+
   return (
     <div className="sing">
+      {visual.waveform ? (
+        <div className="spectrum" aria-hidden="true">
+          <Waveform analyser={playback.analyser} active={status === 'playing'} />
+        </div>
+      ) : null}
+
       <header className="sing-bar hud-panel">
         <div className="sing-bar-left">
           <button type="button" className="btn btn-ghost btn-compact" onClick={onExit}>
@@ -123,10 +140,27 @@ export function SingScreen({
           </button>
           {options.simulated ? <span className="sim-badge">{t('sing.simulated')}</span> : null}
         </div>
-        <div className="sing-score" aria-live="polite">
-          <span className="sing-score-label outlined">{t('sing.score')}</span>
-          <span className="sing-score-value outlined">{score.toLocaleString()}</span>
-          <span className="sing-score-max outlined">{t('sing.ofMax', { max: MAX_SCORE })}</span>
+        <div className="score-capsules" aria-live="polite">
+          <ScoreCapsule
+            tone="notes"
+            label={t('sing.noteScore')}
+            value={formatCabinetScore(snapshot.noteScore)}
+          />
+          <ScoreCapsule
+            tone="bonus"
+            label={t('sing.lineBonus')}
+            value={formatCabinetScore(snapshot.lineBonus)}
+          />
+          <ScoreCapsule
+            tone="total"
+            label={t('sing.score')}
+            value={formatCabinetScore(score)}
+          />
+          <ScoreCapsule
+            tone="accuracy"
+            label={t('results.accuracy')}
+            value={`${formatCabinetScore(accuracyPct, 3)}%`}
+          />
         </div>
         <div className="sing-bar-right">
           <button
@@ -167,20 +201,21 @@ export function SingScreen({
             {t('sing.getReady')} · {countdown}
           </p>
         ) : null}
-        {visual.waveform ? (
-          <div className="waveform hud-panel">
-            <Waveform analyser={playback.analyser} active={status === 'playing'} />
+        <div className="highway-wrap">
+          <div className="player-token" aria-label={t('sing.player', { n: 1 })}>
+            <span>1</span>
           </div>
-        ) : null}
-        <NoteHighway
-          timeline={timeline}
-          timeMs={timeMs}
-          sungMidi={sungMidi}
-          hitting={hitting}
-          particles={visual.particles}
-          flares={visual.flares}
-          maxParticles={visual.maxParticles}
-        />
+          <NoteHighway
+            timeline={timeline}
+            timeMs={timeMs}
+            sungMidi={sungMidi}
+            hitting={hitting}
+            particles={visual.particles}
+            flares={visual.flares}
+            maxParticles={visual.maxParticles}
+            themeId={themeId}
+          />
+        </div>
 
         <div className="sing-lyrics hud-panel">
           <p className="current-line outlined">
@@ -211,7 +246,41 @@ export function SingScreen({
             )}
           </p>
         </div>
+
+        <div
+          className="time-bar"
+          role="progressbar"
+          aria-label={t('sing.time')}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.round(ratio * 100)}
+        >
+          <span className="time-bar-label outlined">{t('sing.time')}</span>
+          <div className="time-bar-track">
+            <div className="time-bar-fill" style={{ width: `${ratio * 100}%` }} />
+          </div>
+          <span className="time-bar-clock outlined">
+            {formatClock(Math.max(0, timeMs))} / {formatClock(timeline.endMs)}
+          </span>
+        </div>
       </section>
+    </div>
+  )
+}
+
+function ScoreCapsule({
+  tone,
+  label,
+  value,
+}: {
+  tone: 'notes' | 'bonus' | 'total' | 'accuracy'
+  label: string
+  value: string
+}) {
+  return (
+    <div className={`score-capsule score-${tone}`}>
+      <span className="score-capsule-label outlined">{label}</span>
+      <span className="score-capsule-value outlined">{value}</span>
     </div>
   )
 }

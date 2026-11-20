@@ -6,7 +6,7 @@ export const en = {
   'app.tagline': 'UltraStar karaoke, reborn in the browser.',
   'app.lede':
     'Load a song, sing into the microphone, and get scored in real time. Built for a party with friends, on a computer or a phone.',
-  'app.footer': 'Phase 3 of 5 · original demo songs with audio · files stay in your browser',
+  'app.footer': 'Phase 3b of 5 · four 2000s visual themes · files stay in your browser',
   'lang.en': 'English',
   'lang.es': 'Spanish',
   'lang.switchTo': 'Language',
@@ -98,6 +98,15 @@ export const en = {
   'grade.shiningStar': 'Shining Star',
   'grade.superstar': 'Superstar',
   'grade.ultrastar': 'Ultrastar',
+  'theme.title': 'Visual theme',
+  'theme.hint': 'Saturated 2000s looks, switchable. Random picks a new theme each song.',
+  'theme.random': 'Random theme each song',
+  'theme.kaleido': 'Kaleido',
+  'theme.aqua': 'Aqua Bubble',
+  'theme.galaxy': 'Neon Galaxy',
+  'theme.laser': 'Laser Grid',
+  'sing.time': 'Time',
+  'sing.player': 'Player {n}',
 } as const
 
 export type MessageKey = keyof typeof en

@@ -18,7 +18,7 @@ This repository is a Kiro-spec-driven project. The official Kiro artifacts live 
 - [`.kiro/specs/resurrection-karaoke/`](.kiro/specs/resurrection-karaoke/) — EARS requirements, design, and the phased task list
 - [`.kiro/hooks/`](.kiro/hooks/) — agent hooks (lint and tests on save)
 
-The Phase 3 Frutiger Aero / Aqua Gloss look is specified in [`.kiro/steering/visual-style.md`](.kiro/steering/visual-style.md).
+The visual look — four switchable 2000s themes (Kaleido, Aqua Bubble, Neon Galaxy, Laser Grid) — is specified in [`.kiro/steering/visual-style.md`](.kiro/steering/visual-style.md).
 
 ## Features
 
@@ -26,7 +26,8 @@ The Phase 3 Frutiger Aero / Aqua Gloss look is specified in [`.kiro/steering/vis
 - In-browser YIN pitch detection and USDX-inspired scoring (10,000 points, classic UltraStar grades)
 - Song library with three original, copyright-free demo songs and synthesized backing tracks
 - Load your own `.txt` chart plus audio (multi-file or folder picker; works on mobile)
-- Live note highway, AnalyserNode waveform, and a guide melody (on by default, can be muted)
+- Live note highway, AnalyserNode spectrum HUD, and a guide melody (on by default, can be muted)
+- Four switchable 2000s visual themes, plus a “random each song” option (remembered in `localStorage`)
 - English / Spanish UI
 
 Party/phones-as-mics mode and the optional ghost verdict are planned, not shipped yet. See [`.kiro/specs/resurrection-karaoke/tasks.md`](.kiro/specs/resurrection-karaoke/tasks.md).
@@ -50,6 +51,7 @@ Useful query flags:
 - `&screen=results` — jump to a perfect simulated result
 - `&visual=high|medium|low|static` — force the visual quality tier
 - `&intro=0` — skip the wake-up intro
+- `&theme=kaleido|aqua|galaxy|laser|random` — lock the visual theme
 
 ### Scripts
 

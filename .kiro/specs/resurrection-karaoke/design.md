@@ -4,7 +4,7 @@
 
 GhostNote is a client-only React application. Song parsing and pitch detection are pure TypeScript modules with no DOM dependency, so they can be unit-tested with fixture text and synthesized sines. The UI is a thin layer that loads files, requests the microphone, and (from Phase 2) synchronizes playback, note highlighting, and scoring.
 
-Phase 1 delivers the foundation. Phase 2 adds timing, the sing screen, scoring, and results. Phase 3 applies the Frutiger Aero / Aqua Gloss visual system (see `.kiro/steering/visual-style.md`), a song library, and deploy. Phase 4 adds party features including required phones-as-mics. Phase 5 is the optional ghost verdict.
+Phase 1 delivers the foundation. Phase 2 adds timing, the sing screen, scoring, and results. Phase 3 applies the visual system (see `.kiro/steering/visual-style.md`), a song library, and deploy. Phase 3b adds four switchable 2000s themes (Kaleido, Aqua Bubble, Neon Galaxy, Laser Grid) with a shared cabinet HUD. Phase 4 adds party features including required phones-as-mics. Phase 5 is the optional ghost verdict.
 
 The display name is the `APP_NAME` constant in `src/config/brand.ts` (currently GhostNote). UI copy lives in `src/i18n` (English and Spanish).
 
@@ -112,15 +112,17 @@ Microphone audio is processed locally and never uploaded for detection or scorin
 - A round prefers the media element clock once backing audio is playing, and falls back to `performance.now()`. A quiet synthesized guide melody (`src/audio/useGuideMelody.ts`) stays on by default and is mutable.
 - A dev-only simulated singer (`simulatedSampleAt`, `?sim=1`) feeds the expected pitch, with optional noise, for headless tests and screenshots.
 
-## Phase 3 visual system
+## Phase 3 / 3b visual system
 
 Follow `.kiro/steering/visual-style.md` exactly:
 
-- Background: a fullscreen WebGL GLSL fragment shader in Winamp MilkDrop style (soft fractals, translucent moving geometry).
+- Four switchable themes (`kaleido`, `aqua`, `galaxy`, `laser`) plus a `random` preference, one WebGL1 shader with `u_mode`, CSS `data-theme`, and theme-specific CSS fallbacks.
+- Background: a fullscreen WebGL GLSL fragment shader in Winamp MilkDrop style (kaleidoscopes, Aqua bubbles, starfield, laser grid).
 - Chrome: glossy 3D capsules, top-45% white reflection, bevel, inset box-shadow. HUD plates are `rgba` black with a thin bright top border.
-- Light: particles and lens flares with additive blending (`lighter` / `AdditiveBlending`).
-- HUD: AnalyserNode waveforms, classic sans-serif with a hard black outline, subtle ghostly-green note glow.
-- Fallbacks: reduced shader quality on low-end phones, `prefers-reduced-motion` almost-static, CSS Aero gradient if WebGL is missing. Gameplay timing must not hitch for visuals.
+- Light: particles and large 8-point lens flares with additive blending (`lighter`).
+- HUD: AnalyserNode spectrum at the top, multicolor digital score capsules, colored player square, TIME bar, bold outlined lyrics, chunky pitch-tinted note pills.
+- Galaxy / Laser may style the highway with neon perspective lanes; time still scrolls left to right.
+- Fallbacks: reduced shader quality on low-end phones, `prefers-reduced-motion` almost-static, theme-colored CSS gradient if WebGL is missing. Gameplay timing must not hitch for visuals.
 
 ## Phase 4 party networking
 

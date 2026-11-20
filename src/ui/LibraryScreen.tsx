@@ -11,6 +11,8 @@ import { parseUltraStar } from '../parser/index.ts'
 import { describeParseError } from './describeParseError.ts'
 import { LanguageSwitcher } from './LanguageSwitcher.tsx'
 import { MicTest } from './MicTest.tsx'
+import { ThemePicker } from './ThemePicker.tsx'
+import type { ThemeId, ThemePreference } from '../visual/themes.ts'
 
 type LibraryScreenProps = {
   demoSongs: LoadedSong[]
@@ -24,6 +26,9 @@ type LibraryScreenProps = {
   onSing: () => void
   onAddSongs: (songs: LoadedSong[]) => void
   onError: (message: string | undefined) => void
+  themePreference: ThemePreference
+  themeId: ThemeId
+  onThemeChange: (next: ThemePreference) => void
 }
 
 function durationLabel(song: LoadedSong, template: (n: number) => string): string {
@@ -43,6 +48,9 @@ export function LibraryScreen({
   onSing,
   onAddSongs,
   onError,
+  themePreference,
+  themeId,
+  onThemeChange,
 }: LibraryScreenProps) {
   const { t } = useI18n()
   const filesId = useId()
@@ -208,6 +216,11 @@ export function LibraryScreen({
         </section>
 
         <div className="home-side">
+          <ThemePicker
+            preference={themePreference}
+            themeId={themeId}
+            onChange={onThemeChange}
+          />
           <MicTest />
           {selected ? (
             <div className="start-card hud-panel">

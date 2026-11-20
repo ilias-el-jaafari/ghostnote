@@ -75,6 +75,15 @@ Follow `.kiro/steering/visual-style.md`. Do not ship a flat or minimalist look.
   - Live site: https://ilias-el-jaafari.github.io/ghostnote/
   - _Requirements: 4.3, 10.3_
 
+## Phase 3b — Colorful 2000s themes
+
+- [x] 11b. Switchable visual themes (Kaleido, Aqua Bubble, Neon Galaxy, Laser Grid)
+  - Settings picker + “random each song”, persisted as `ghostnote-theme`
+  - URL override `?theme=`
+  - Shared 2000s HUD: spectrum at top, multicolor score capsules, player square, TIME bar, outlined lyric box, chunky glossy notes, big flares
+  - Performance tiers and `prefers-reduced-motion` fallbacks still apply
+  - Theme logic unit tests
+
 ## Phase 4 — Party features (including phones as mics)
 
 - [ ] 12. Add a song queue and take-turns flow so the next singer can start without a reload

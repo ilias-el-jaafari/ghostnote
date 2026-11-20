@@ -1,4 +1,4 @@
-/* Frutiger Aero / Aqua Gloss chrome — never flat. */
+/* Saturated 2000s cabinet chrome — never flat. */
 
 .app,
 .sing,
@@ -689,15 +689,20 @@
 
 .note-bar {
   position: absolute;
-  height: 20px;
+  height: 28px;
   border-radius: 999px;
   z-index: 2;
   border: 1px solid rgba(255, 255, 255, 0.55);
-  background: linear-gradient(180deg, #c8ffe0 0%, #4ee08a 45%, #0d7a40 100%);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--note-tint, #3dff5a) 45%, #fff) 0%,
+    var(--note-tint, #3dff5a) 48%,
+    color-mix(in srgb, var(--note-tint, #3dff5a) 55%, #000) 100%
+  );
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.75),
-    inset 0 -3px 6px rgba(0, 0, 0, 0.4),
-    0 0 12px rgba(80, 255, 160, 0.45);
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.45),
+    0 0 16px color-mix(in srgb, var(--note-tint, #3dff5a) 70%, transparent);
   overflow: hidden;
 }
 
@@ -989,12 +994,19 @@
     min-height: 52px;
   }
 
-  /* Keep a compact 3-column sing header; do not stack into one column. */
+  /* Controls on the first row, score capsules on the second — keep buttons readable. */
   .sing-bar {
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      'left right'
+      'scores scores';
     gap: 8px;
     padding: 8px;
   }
+
+  .sing-bar-left { grid-area: left; }
+  .sing-bar-right { grid-area: right; }
+  .score-capsules { grid-area: scores; }
 
   .sing-bar-left,
   .sing-bar-right {
@@ -1029,5 +1041,322 @@
 @media (max-width: 420px) {
   .meta-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+
+/* —— Phase 3b 2000s HUD —— */
+
+.spectrum {
+  height: 56px;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 0 0 12px 12px;
+  background: rgba(0, 0, 0, 0.45);
+  border-bottom: 1px solid var(--hud-edge);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
+}
+
+.sing > .spectrum {
+  width: calc(100% + 20px);
+  margin-left: -10px;
+  margin-right: -10px;
+}
+
+.score-capsules {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  align-items: stretch;
+  flex-wrap: wrap;
+}
+
+.score-capsule {
+  --capsule-color: #1ea7ff;
+  min-width: 4.6rem;
+  padding: 3px 10px 5px;
+  border-radius: 999px;
+  border: 2px solid var(--capsule-color);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--capsule-color) 55%, #fff) 0%, rgba(0, 0, 0, 0.62) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.75),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.4),
+    0 0 12px color-mix(in srgb, var(--capsule-color) 70%, transparent);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.score-capsule::before {
+  content: '';
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  top: 0;
+  height: 45%;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.02));
+  border-radius: 999px 999px 40% 40%;
+  pointer-events: none;
+}
+
+.score-capsule-label {
+  display: block;
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #fff;
+  position: relative;
+}
+
+.score-capsule-value {
+  display: block;
+  font-variant-numeric: tabular-nums;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #fff;
+  line-height: 1.1;
+  position: relative;
+}
+
+.score-notes { --capsule-color: #1ea7ff; }
+.score-bonus { --capsule-color: #3dff5a; }
+.score-total { --capsule-color: #ff3de8; }
+.score-accuracy { --capsule-color: #ffe14a; }
+
+.highway-wrap {
+  position: relative;
+  padding-left: 52px;
+}
+
+.player-token {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  border: 2px solid #1ea7ff;
+  background:
+    linear-gradient(180deg, #7ed6ff 0%, #1676d8 55%, #043a7a 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.45),
+    0 0 16px rgba(30, 167, 255, 0.7);
+  display: grid;
+  place-items: center;
+  z-index: 2;
+}
+
+.player-token span {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: var(--outline);
+}
+
+.highway-perspective {
+  background:
+    linear-gradient(180deg, rgba(10, 0, 30, 0.25), rgba(0, 0, 0, 0.62));
+}
+
+.highway-perspective .highway-lane {
+  background: linear-gradient(90deg, rgba(255, 0, 220, 0.35), rgba(0, 255, 255, 0.15), transparent);
+}
+
+.time-bar {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid var(--border);
+  border-top: 1px solid var(--hud-edge);
+  box-shadow: var(--shadow);
+}
+
+.time-bar-label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.time-bar-track {
+  height: 12px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  overflow: hidden;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.time-bar-fill {
+  height: 100%;
+  width: 0;
+  border-radius: inherit;
+  background: linear-gradient(180deg, #fff6a0, #ffe14a 40%, #ff7a18);
+  box-shadow: 0 0 12px rgba(255, 220, 80, 0.8);
+}
+
+.time-bar-clock {
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  font-size: 0.85rem;
+  color: #fff;
+}
+
+.sing-lyrics {
+  border: 2px solid var(--accent-border);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(0, 0, 0, 0.62));
+}
+
+.current-line {
+  -webkit-text-stroke: 0.6px #000;
+  paint-order: stroke fill;
+}
+
+.theme-picker {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.theme-picker h2 {
+  font-size: 1.05rem;
+}
+
+.theme-picker-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+  text-shadow: 0 1px 2px #000;
+}
+
+.theme-swatches {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.theme-swatch {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  border-radius: 16px;
+  border: 1px solid var(--accent-border);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(0, 0, 0, 0.5));
+  color: #fff;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+}
+
+.theme-swatch.is-selected {
+  box-shadow:
+    inset 0 0 0 2px var(--accent),
+    0 0 16px color-mix(in srgb, var(--accent) 55%, transparent),
+    var(--shadow);
+}
+
+.theme-swatch-preview {
+  display: block;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.theme-swatch[data-theme-preview='kaleido'] .theme-swatch-preview {
+  background:
+    radial-gradient(circle at 30% 30%, #ff4de8, transparent 50%),
+    radial-gradient(circle at 80% 20%, #3dff9a, transparent 45%),
+    linear-gradient(135deg, #2a0066, #7a1cff);
+}
+
+.theme-swatch[data-theme-preview='aqua'] .theme-swatch-preview {
+  background:
+    radial-gradient(circle at 20% 20%, #fff, #7ef0ff 30%, transparent 55%),
+    linear-gradient(180deg, #4ee0ff, #1378c8);
+}
+
+.theme-swatch[data-theme-preview='galaxy'] .theme-swatch-preview {
+  background:
+    radial-gradient(circle at 70% 30%, #ff7ad9, transparent 35%),
+    radial-gradient(circle at 30% 70%, #4d7cff, transparent 40%),
+    linear-gradient(180deg, #140028, #000010);
+}
+
+.theme-swatch[data-theme-preview='laser'] .theme-swatch-preview {
+  background:
+    repeating-linear-gradient(90deg, transparent 0 10px, rgba(255, 0, 220, 0.6) 10px 12px),
+    linear-gradient(180deg, #1a0030, #39ffff 120%);
+}
+
+.theme-swatch-name {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.theme-random {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: var(--outline);
+}
+
+@media (max-width: 720px) {
+  .spectrum {
+    height: 40px;
+  }
+
+  .score-capsule {
+    min-width: 3.4rem;
+    padding: 2px 6px 3px;
+  }
+
+  .score-capsule-label {
+    font-size: 0.5rem;
+  }
+
+  .score-capsule-value {
+    font-size: 0.82rem;
+    letter-spacing: 0.04em;
+  }
+
+  .highway-wrap {
+    padding-left: 40px;
+  }
+
+  .player-token {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+  }
+
+  .player-token span {
+    font-size: 1.1rem;
+  }
+
+  .time-bar {
+    grid-template-columns: auto 1fr;
+    gap: 6px;
+    padding: 6px 10px;
+  }
+
+  .time-bar-clock {
+    grid-column: 1 / -1;
+    justify-self: end;
+    font-size: 0.75rem;
   }
 }

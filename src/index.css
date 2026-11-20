@@ -97,10 +97,52 @@ button {
 }
 
 .stage-bg-fallback {
-  background:
-    radial-gradient(circle at 20% 20%, rgba(140, 225, 255, 0.55), transparent 42%),
-    radial-gradient(circle at 80% 16%, rgba(160, 255, 180, 0.35), transparent 40%),
-    linear-gradient(180deg, #4eb7e0 0%, #0d5e82 55%, #041820 100%);
+  background-color: #0a0018;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+html[data-theme='kaleido'] {
+  --bg: #140028;
+  --accent: #ff7af0;
+  --accent-dim: rgba(255, 80, 230, 0.28);
+  --accent-border: rgba(255, 140, 255, 0.6);
+  --lime: #7cff4a;
+  --ghost: #e8ff9a;
+  --hud-edge: rgba(255, 170, 255, 0.95);
+  --border: rgba(255, 160, 255, 0.35);
+}
+
+html[data-theme='aqua'] {
+  --bg: #05244a;
+  --accent: #7ef0ff;
+  --accent-dim: rgba(80, 230, 255, 0.28);
+  --accent-border: rgba(180, 255, 255, 0.6);
+  --lime: #9cff7a;
+  --ghost: #c6ffd8;
+  --hud-edge: rgba(210, 255, 255, 0.95);
+}
+
+html[data-theme='galaxy'] {
+  --bg: #070014;
+  --accent: #7aa0ff;
+  --accent-dim: rgba(80, 120, 255, 0.3);
+  --accent-border: rgba(180, 160, 255, 0.55);
+  --lime: #ff7ad9;
+  --ghost: #d6c8ff;
+  --hud-edge: rgba(200, 180, 255, 0.95);
+  --border: rgba(160, 140, 255, 0.35);
+}
+
+html[data-theme='laser'] {
+  --bg: #0a0018;
+  --accent: #39ffff;
+  --accent-dim: rgba(0, 255, 255, 0.28);
+  --accent-border: rgba(255, 0, 220, 0.55);
+  --lime: #39ff9a;
+  --ghost: #ff7af8;
+  --hud-edge: rgba(0, 255, 255, 0.95);
+  --border: rgba(255, 0, 220, 0.35);
 }
 
 .hud-panel {

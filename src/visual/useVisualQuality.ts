@@ -53,10 +53,8 @@ export function useVisualQuality(): VisualQualityState {
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    window.__GHOSTNOTE_VISUAL__ = { fps: fps ?? 0, quality }
-    return () => {
-      delete window.__GHOSTNOTE_VISUAL__
-    }
+    const current = window.__GHOSTNOTE_VISUAL__
+    window.__GHOSTNOTE_VISUAL__ = { fps: fps ?? 0, quality, theme: current?.theme }
   }, [fps, quality])
 
   const settings = useMemo(() => settingsFor(quality, boot.webgl), [boot.webgl, quality])
@@ -66,6 +64,6 @@ export function useVisualQuality(): VisualQualityState {
 
 declare global {
   interface Window {
-    __GHOSTNOTE_VISUAL__?: { fps: number; quality: VisualQuality }
+    __GHOSTNOTE_VISUAL__?: { fps: number; quality: VisualQuality; theme?: string }
   }
 }

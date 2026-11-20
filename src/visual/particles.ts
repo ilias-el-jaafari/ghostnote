@@ -77,7 +77,7 @@ export class ParticleEngine {
       vy: -6,
       life: 0.28,
       maxLife: 0.28,
-      size: golden ? 46 : 28,
+      size: golden ? 72 : 48,
       r: tint.r,
       g: tint.g,
       b: tint.b,
@@ -143,25 +143,41 @@ export class ParticleEngine {
   }
 }
 
-function drawFlare(ctx: CanvasRenderingContext2D, particle: Particle, alpha: number) {
-  const { x, y, size, r, g, b } = particle
+function drawStarBurst(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  size: number,
+  alpha: number,
+  tint: { r: number; g: number; b: number },
+) {
   const glow = ctx.createRadialGradient(x, y, 0, x, y, size)
-  glow.addColorStop(0, `rgba(255,255,255,${0.9 * alpha})`)
-  glow.addColorStop(0.18, `rgba(${r},${g},${b},${0.7 * alpha})`)
-  glow.addColorStop(1, `rgba(${r},${g},${b},0)`)
+  glow.addColorStop(0, `rgba(255,255,255,${0.95 * alpha})`)
+  glow.addColorStop(0.16, `rgba(${tint.r},${tint.g},${tint.b},${0.75 * alpha})`)
+  glow.addColorStop(1, `rgba(${tint.r},${tint.g},${tint.b},0)`)
   ctx.fillStyle = glow
   ctx.beginPath()
   ctx.arc(x, y, size, 0, Math.PI * 2)
   ctx.fill()
 
-  ctx.strokeStyle = `rgba(255,255,255,${0.65 * alpha})`
-  ctx.lineWidth = 1.2
-  ctx.beginPath()
-  ctx.moveTo(x - size * 1.6, y)
-  ctx.lineTo(x + size * 1.6, y)
-  ctx.moveTo(x, y - size * 0.9)
-  ctx.lineTo(x, y + size * 0.9)
-  ctx.stroke()
+  ctx.strokeStyle = `rgba(255,255,255,${0.8 * alpha})`
+  for (let i = 0; i < 8; i++) {
+    const angle = (i * Math.PI) / 4
+    const length = i % 2 === 0 ? size * 2.3 : size * 1.25
+    ctx.lineWidth = i % 2 === 0 ? 2.4 : 1.3
+    ctx.beginPath()
+    ctx.moveTo(x - Math.cos(angle) * length, y - Math.sin(angle) * length)
+    ctx.lineTo(x + Math.cos(angle) * length, y + Math.sin(angle) * length)
+    ctx.stroke()
+  }
+}
+
+function drawFlare(ctx: CanvasRenderingContext2D, particle: Particle, alpha: number) {
+  drawStarBurst(ctx, particle.x, particle.y, particle.size, alpha, {
+    r: particle.r,
+    g: particle.g,
+    b: particle.b,
+  })
 }
 
 export const NOW_LINE_RATIO = 0.2
@@ -177,23 +193,8 @@ export function drawPersistentFlare(
 ) {
   ctx.save()
   ctx.globalCompositeOperation = 'lighter'
-  const tint = golden ? { r: 255, g: 230, b: 140 } : { r: 160, g: 240, b: 255 }
-  const size = (golden ? 70 : 42) * intensity
-  const glow = ctx.createRadialGradient(x, y, 0, x, y, size)
-  glow.addColorStop(0, `rgba(255,255,255,${0.85 * intensity})`)
-  glow.addColorStop(0.2, `rgba(${tint.r},${tint.g},${tint.b},${0.55 * intensity})`)
-  glow.addColorStop(1, `rgba(${tint.r},${tint.g},${tint.b},0)`)
-  ctx.fillStyle = glow
-  ctx.beginPath()
-  ctx.arc(x, y, size, 0, Math.PI * 2)
-  ctx.fill()
-  ctx.strokeStyle = `rgba(255,255,255,${0.55 * intensity})`
-  ctx.lineWidth = 1.4
-  ctx.beginPath()
-  ctx.moveTo(x - size * 1.8, y)
-  ctx.lineTo(x + size * 1.8, y)
-  ctx.moveTo(x, y - size * 1.05)
-  ctx.lineTo(x, y + size * 1.05)
-  ctx.stroke()
+  const tint = golden ? { r: 255, g: 230, b: 140 } : { r: 180, g: 240, b: 255 }
+  const size = (golden ? 118 : 78) * intensity
+  drawStarBurst(ctx, x, y, size, intensity, tint)
   ctx.restore()
 }

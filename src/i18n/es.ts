@@ -8,7 +8,7 @@ export const es: Record<MessageKey, string> = {
   'app.lede':
     'Carga una canción, canta al micrófono y recibe una puntuación en tiempo real. Hecho para una fiesta con amigos, en un ordenador o en un móvil.',
   'app.footer':
-    'Fase 3 de 5 · canciones de demo originales con audio · los archivos no salen de tu navegador',
+    'Fase 3b de 5 · cuatro temas visuales de los 2000 · los archivos no salen de tu navegador',
   'lang.en': 'Inglés',
   'lang.es': 'Español',
   'lang.switchTo': 'Idioma',
@@ -100,4 +100,13 @@ export const es: Record<MessageKey, string> = {
   'grade.shiningStar': 'Estrella brillante',
   'grade.superstar': 'Superestrella',
   'grade.ultrastar': 'Ultrastar',
+  'theme.title': 'Tema visual',
+  'theme.hint': 'Looks saturados de los 2000, intercambiables. Aleatorio elige un tema nuevo en cada canción.',
+  'theme.random': 'Tema aleatorio en cada canción',
+  'theme.kaleido': 'Kaleido',
+  'theme.aqua': 'Aqua Bubble',
+  'theme.galaxy': 'Neon Galaxy',
+  'theme.laser': 'Laser Grid',
+  'sing.time': 'Tiempo',
+  'sing.player': 'Jugador {n}',
 }

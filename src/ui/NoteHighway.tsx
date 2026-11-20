@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { useI18n } from '../i18n/index.ts'
 import type { SongTimeline, TimedNote } from '../game/index.ts'
 import { drawPersistentFlare, ParticleEngine, NOW_LINE_RATIO } from '../visual/particles.ts'
+import { noteTint, THEMES, type ThemeId } from '../visual/themes.ts'
 
 type NoteHighwayProps = {
   timeline: SongTimeline
@@ -11,6 +12,7 @@ type NoteHighwayProps = {
   particles?: boolean
   flares?: boolean
   maxParticles?: number
+  themeId?: ThemeId
 }
 
 const LOOKAHEAD_MS = 4000
@@ -63,6 +65,7 @@ export function NoteHighway({
   particles = false,
   flares = false,
   maxParticles = 0,
+  themeId = 'aqua',
 }: NoteHighwayProps) {
   const { t } = useI18n()
   const { min, max } = pitchRange(timeline.notes)
@@ -70,11 +73,32 @@ export function NoteHighway({
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const engineRef = useRef<ParticleEngine | undefined>(undefined)
   const lastRef = useRef(0)
-  const frameRef = useRef({ timeMs, hitting, particles, flares, maxParticles, min, span, timeline })
+  const laneStyle = THEMES[themeId].laneStyle
+  const frameRef = useRef({
+    timeMs,
+    hitting,
+    particles,
+    flares,
+    maxParticles,
+    min,
+    span,
+    timeline,
+    laneStyle,
+  })
 
   useEffect(() => {
-    frameRef.current = { timeMs, hitting, particles, flares, maxParticles, min, span, timeline }
-  }, [timeMs, hitting, particles, flares, maxParticles, min, span, timeline])
+    frameRef.current = {
+      timeMs,
+      hitting,
+      particles,
+      flares,
+      maxParticles,
+      min,
+      span,
+      timeline,
+      laneStyle,
+    }
+  }, [timeMs, hitting, particles, flares, maxParticles, min, span, timeline, laneStyle])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -102,6 +126,9 @@ export function NoteHighway({
       ctx.clearRect(0, 0, width, height)
 
       const nowX = NOW_RATIO * width
+      if (current.laneStyle === 'perspective') {
+        drawPerspectiveLanes(ctx, width, height, nowX)
+      }
       const active = current.timeline.notes.filter(
         (note) => note.startMs <= current.timeMs && current.timeMs < note.endMs,
       )
@@ -132,7 +159,11 @@ export function NoteHighway({
   }, [maxParticles])
 
   return (
-    <div className="highway" role="img" aria-label={t('sing.now')}>
+    <div
+      className={laneStyle === 'perspective' ? 'highway highway-perspective' : 'highway'}
+      role="img"
+      aria-label={t('sing.now')}
+    >
       <div className="highway-lanes" aria-hidden="true">
         {Array.from({ length: Math.round(span) + 1 }, (_, index) => (
           <span
@@ -151,14 +182,16 @@ export function NoteHighway({
         if (startX + width < -5 || startX > 110) return null
         const bottom = ((note.pitch - min) / span) * 100
         const active = note.startMs <= timeMs && timeMs < note.endMs
+        const tint = noteTint(note.pitch, note.type)
         return (
           <div
             key={`${note.index}-${note.startBeat}`}
             className={`note-bar note-${note.type}${active ? ' is-active' : ''}`}
             style={{
               left: `${startX}%`,
-              width: `${Math.max(width, 1.2)}%`,
-              bottom: `calc(${bottom}% - 10px)`,
+              width: `${Math.max(width, 1.6)}%`,
+              bottom: `calc(${bottom}% - 14px)`,
+              ['--note-tint' as string]: tint,
             }}
           />
         )
@@ -175,6 +208,51 @@ export function NoteHighway({
       <canvas ref={canvasRef} className="highway-fx" aria-hidden="true" />
     </div>
   )
+}
+
+
+const LANE_NEON = ['#1ea7ff', '#ff3de8', '#ffe14a', '#3dff5a']
+
+/** Neon perspective floor for Galaxy / Laser — time still runs left to right. */
+function drawPerspectiveLanes(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  nowX: number,
+) {
+  ctx.save()
+  ctx.globalCompositeOperation = 'lighter'
+  const vanishX = width * 0.96
+  const vanishY = height * 0.52
+  const lanes = 5
+  for (let i = 0; i < lanes; i++) {
+    const y = (height * i) / (lanes - 1)
+    ctx.strokeStyle = LANE_NEON[i % LANE_NEON.length] ?? '#1ea7ff'
+    ctx.globalAlpha = 0.28
+    ctx.lineWidth = 2
+    ctx.beginPath()
+    ctx.moveTo(0, y)
+    ctx.lineTo(vanishX, vanishY)
+    ctx.stroke()
+  }
+  ctx.strokeStyle = 'rgba(180, 255, 255, 0.35)'
+  ctx.lineWidth = 1.5
+  ctx.globalAlpha = 0.4
+  ctx.beginPath()
+  ctx.moveTo(nowX, 0)
+  ctx.lineTo(nowX, height)
+  ctx.stroke()
+  for (let i = 1; i <= 8; i++) {
+    const t = i / 8
+    const x = nowX + (vanishX - nowX) * t
+    const spread = (1 - t * 0.72) * height * 0.48
+    ctx.globalAlpha = 0.16 * (1 - t)
+    ctx.beginPath()
+    ctx.moveTo(x, vanishY - spread)
+    ctx.lineTo(x, vanishY + spread)
+    ctx.stroke()
+  }
+  ctx.restore()
 }
 
 export const HIGHWAY_LOOKAHEAD_MS = LOOKAHEAD_MS

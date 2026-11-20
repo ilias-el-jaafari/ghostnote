@@ -1,9 +1,12 @@
 import { useEffect, useRef } from 'react'
+import { PLAYER_PALETTE } from '../visual/themes.ts'
 
 type WaveformProps = {
   analyser: AnalyserNode | undefined
   active?: boolean
 }
+
+const BAR_COLORS = [...PLAYER_PALETTE, '#7af0ff']
 
 export function Waveform({ analyser, active = true }: WaveformProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -14,7 +17,6 @@ export function Waveform({ analyser, active = true }: WaveformProps) {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
     let frame = 0
-    const time = new Uint8Array(analyser?.fftSize ?? 1024)
     const freq = new Uint8Array(analyser?.frequencyBinCount ?? 512)
 
     const draw = () => {
@@ -26,42 +28,27 @@ export function Waveform({ analyser, active = true }: WaveformProps) {
         canvas.height = height
       }
       ctx.clearRect(0, 0, width, height)
-      ctx.fillStyle = 'rgba(0, 8, 16, 0.35)'
-      ctx.fillRect(0, 0, width, height)
 
       if (analyser && active) {
-        analyser.getByteTimeDomainData(time)
         analyser.getByteFrequencyData(freq)
       } else {
-        time.fill(128)
         freq.fill(0)
       }
 
-      const bars = Math.min(48, freq.length)
+      const bars = Math.min(64, freq.length)
+      const gap = Math.max(1, ratio)
       const barWidth = width / bars
       for (let i = 0; i < bars; i++) {
         const value = (freq[i] ?? 0) / 255
-        const barHeight = value * height * 0.45
+        const barHeight = Math.max(2 * ratio, value * height * 0.95)
         const x = i * barWidth
+        const hex = BAR_COLORS[i % BAR_COLORS.length] ?? '#7af0ff'
         const gradient = ctx.createLinearGradient(0, height - barHeight, 0, height)
-        gradient.addColorStop(0, 'rgba(180, 255, 255, 0.85)')
-        gradient.addColorStop(1, 'rgba(80, 200, 255, 0.15)')
+        gradient.addColorStop(0, hex)
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0.15)')
         ctx.fillStyle = gradient
-        ctx.fillRect(x + 1, height - barHeight, Math.max(barWidth - 2, 1), barHeight)
+        ctx.fillRect(x + gap, height - barHeight, Math.max(barWidth - gap * 2, 1), barHeight)
       }
-
-      ctx.lineWidth = Math.max(2, ratio)
-      ctx.strokeStyle = 'rgba(220, 255, 255, 0.95)'
-      ctx.beginPath()
-      const slice = width / time.length
-      for (let i = 0; i < time.length; i++) {
-        const v = (time[i] ?? 128) / 128.0
-        const x = i * slice
-        const y = (v * 0.55 + 0.1) * height
-        if (i === 0) ctx.moveTo(x, y)
-        else ctx.lineTo(x, y)
-      }
-      ctx.stroke()
       frame = requestAnimationFrame(draw)
     }
     frame = requestAnimationFrame(draw)

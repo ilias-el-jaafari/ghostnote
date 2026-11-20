@@ -14,6 +14,7 @@ import { SingScreen } from './ui/SingScreen.tsx'
 import { LibraryScreen } from './ui/LibraryScreen.tsx'
 import type { SessionOptions } from './ui/useGameSession.ts'
 import { MilkDropBackground } from './visual/MilkDropBackground.tsx'
+import { useTheme } from './visual/useTheme.ts'
 import { WakeIntro } from './visual/WakeIntro.tsx'
 import { useVisualQuality } from './visual/useVisualQuality.ts'
 import './App.css'
@@ -49,6 +50,8 @@ function perfectSimResult(song: LoadedSong['song']): RoundResult {
 export default function App() {
   const { t } = useI18n()
   const visual = useVisualQuality()
+  const theme = useTheme()
+  const prepareForSong = theme.prepareForSong
   const flags = useMemo(() => readPlayFlags(), [])
   const builtin = useMemo(() => loadBuiltinSongs(), [])
   const [userSongs, setUserSongs] = useState<LoadedSong[]>([])
@@ -80,10 +83,11 @@ export default function App() {
 
   const startSinging = useCallback(() => {
     if (!selected) return
+    prepareForSong()
     setSeekMs(undefined)
     setResult(undefined)
     setView('sing')
-  }, [selected])
+  }, [selected, prepareForSong])
 
   const onSingFinished = useCallback((next: RoundResult) => {
     setResult(next)
@@ -98,7 +102,11 @@ export default function App() {
 
   const stage = (
     <>
-      <MilkDropBackground settings={visual.settings} onFps={visual.reportFps} />
+      <MilkDropBackground
+        settings={visual.settings}
+        themeId={theme.themeId}
+        onFps={visual.reportFps}
+      />
       <WakeIntro />
     </>
   )
@@ -114,6 +122,7 @@ export default function App() {
           options={sessionOptions}
           guideMuted={guideMuted}
           visual={visual.settings}
+          themeId={theme.themeId}
           onToggleGuide={() => setGuideMuted((value) => !value)}
           onExit={() => setView('home')}
           onFinished={onSingFinished}
@@ -153,6 +162,9 @@ export default function App() {
         onSing={startSinging}
         onAddSongs={onAddSongs}
         onError={setLoadError}
+        themePreference={theme.preference}
+        themeId={theme.themeId}
+        onThemeChange={theme.setPreference}
       />
     </>
   )

@@ -1,3 +1,4 @@
+import { publicUrl } from '../config/paths.ts'
 import { parseUltraStar, type ParsedSong } from '../parser/index.ts'
 import aquaParade from '../songs/aqua-parade.txt?raw'
 import midnightEcho from '../songs/midnight-echo.txt?raw'
@@ -26,19 +27,19 @@ export const DEMO_CATALOG: CatalogEntry[] = [
   {
     id: 'midnight-echo',
     sourceName: 'midnight-echo.txt',
-    audioUrl: '/songs/midnight-echo.ogg',
+    audioUrl: publicUrl('songs/midnight-echo.ogg'),
     text: midnightEcho,
   },
   {
     id: 'aqua-parade',
     sourceName: 'aqua-parade.txt',
-    audioUrl: '/songs/aqua-parade.ogg',
+    audioUrl: publicUrl('songs/aqua-parade.ogg'),
     text: aquaParade,
   },
   {
     id: 'sky-capsule',
     sourceName: 'sky-capsule.txt',
-    audioUrl: '/songs/sky-capsule.ogg',
+    audioUrl: publicUrl('songs/sky-capsule.ogg'),
     text: skyCapsule,
   },
 ]

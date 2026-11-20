@@ -2,14 +2,15 @@
   "name": "GhostNote",
   "short_name": "GhostNote",
   "description": "UltraStar karaoke, reborn in the browser. Sing with friends on desktop or mobile.",
-  "start_url": "/",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#07090a",
-  "theme_color": "#07090a",
+  "background_color": "#0a4a66",
+  "theme_color": "#0a4a66",
   "lang": "en",
   "icons": [
     {
-      "src": "/favicon.svg",
+      "src": "./favicon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"

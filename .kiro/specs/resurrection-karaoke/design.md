@@ -133,7 +133,7 @@ Phones-as-microphones is required, not optional.
 
 ## Deployment (Phase 3)
 
-Static hosting (for example GitHub Pages or Cloudflare Pages) is enough for the client: `npm run build` emits a static `dist/`. The Phase 4 relay can be a tiny standalone service. Confirm the exact host with Ilias before attaching a custom domain or making the repo public.
+The client is a static Vite build deployed to GitHub Pages at `https://ilias-el-jaafari.github.io/ghostnote/` (`base` is `/ghostnote/`). Public repo: `https://github.com/ilias-el-jaafari/ghostnote`. The Phase 4 relay can be a tiny standalone free-tier service (host decided later).
 
 ## Security and licensing
 

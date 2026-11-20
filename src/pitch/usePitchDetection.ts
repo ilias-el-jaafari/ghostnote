@@ -1,4 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import {
+  boostInPlace,
+  DEFAULT_MIC_MIN_RMS,
+  DEFAULT_MIC_SENSITIVITY,
+  rmsGateForSensitivity,
+  yinFallbackForSensitivity,
+  yinThresholdForSensitivity,
+} from '../audio/mix.ts'
 import { frequencyToNoteName, type NamedNote } from './note.ts'
 import { detectPitchYin } from './yin.ts'
 
@@ -19,26 +27,18 @@ export type LivePitch = {
 
 export type MicErrorCode = 'unsupported' | 'denied' | 'notFound' | 'startFailed'
 
-export const MIC_MIN_RMS = 0.008
+/** Default gate at the default sensitivity. Prefer `rmsGateForSensitivity`. */
+export const MIC_MIN_RMS = DEFAULT_MIC_MIN_RMS
 
 const FFT_SIZE = 8192
-const MIN_RMS = MIC_MIN_RMS
 
 function getAudioContextConstructor(): typeof AudioContext | undefined {
   if (typeof window === 'undefined') return undefined
   return window.AudioContext || window.webkitAudioContext
 }
 
-function computeRms(samples: Float32Array): number {
-  let sumSq = 0
-  for (let i = 0; i < samples.length; i += 1) {
-    const sample = samples[i] ?? 0
-    sumSq += sample * sample
-  }
-  return Math.sqrt(sumSq / samples.length)
-}
-
-export function usePitchDetection() {
+export function usePitchDetection(sensitivity = DEFAULT_MIC_SENSITIVITY) {
+  const sensitivityRef = useRef(sensitivity)
   const [status, setStatus] = useState<MicStatus>('idle')
   const [errorCode, setErrorCode] = useState<MicErrorCode | undefined>(undefined)
   const [errorDetail, setErrorDetail] = useState<string | undefined>(undefined)
@@ -54,6 +54,10 @@ export function usePitchDetection() {
   const analyserRef = useRef<AnalyserNode | undefined>(undefined)
   const frameRef = useRef<number | undefined>(undefined)
   const bufferRef = useRef<Float32Array<ArrayBuffer> | undefined>(undefined)
+
+  useEffect(() => {
+    sensitivityRef.current = sensitivity
+  }, [sensitivity])
 
   const stopLoop = useCallback(() => {
     if (frameRef.current !== undefined) {
@@ -99,7 +103,7 @@ export function usePitchDetection() {
         audio: {
           echoCancellation: false,
           noiseSuppression: false,
-          autoGainControl: false,
+          autoGainControl: true,
           channelCount: 1,
         },
         video: false,
@@ -127,14 +131,18 @@ export function usePitchDetection() {
         if (!activeAnalyser || !activeContext || !buffer) return
 
         activeAnalyser.getFloatTimeDomainData(buffer)
-        const rms = computeRms(buffer)
+        const sensitivityNow = sensitivityRef.current
+        const minRms = rmsGateForSensitivity(sensitivityNow)
+        const rawRms = boostInPlace(buffer)
         const result =
-          rms >= MIN_RMS
+          rawRms >= minRms
             ? detectPitchYin(buffer, {
                 sampleRate: activeContext.sampleRate,
                 minFrequency: 80,
                 maxFrequency: 1000,
-                minRms: MIN_RMS,
+                minRms: minRms,
+                threshold: yinThresholdForSensitivity(sensitivityNow),
+                fallbackThreshold: yinFallbackForSensitivity(sensitivityNow),
               })
             : null
 
@@ -143,14 +151,14 @@ export function usePitchDetection() {
             frequency: result.frequency,
             note: frequencyToNoteName(result.frequency),
             probability: result.probability,
-            rms,
+            rms: rawRms,
           })
         } else {
           setLive({
             frequency: null,
             note: null,
             probability: 0,
-            rms,
+            rms: rawRms,
           })
         }
 

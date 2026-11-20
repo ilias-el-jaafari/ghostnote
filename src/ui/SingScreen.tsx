@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { guideGainFor, rmsGateForSensitivity } from '../audio/mix.ts'
 import { useGuideMelody } from '../audio/useGuideMelody.ts'
 import { useSongPlayback } from '../audio/useSongPlayback.ts'
 import {
@@ -13,7 +14,7 @@ import {
 import { useI18n } from '../i18n/index.ts'
 import type { ParsedSong } from '../parser/index.ts'
 import { comparePitchOctaveTolerant, frequencyToMidi, ultraStarPitchToMidi } from '../pitch/index.ts'
-import { MIC_MIN_RMS, usePitchDetection } from '../pitch/usePitchDetection.ts'
+import { usePitchDetection } from '../pitch/usePitchDetection.ts'
 import type { QualitySettings } from '../visual/quality.ts'
 import {
   formatCabinetScore,
@@ -21,6 +22,7 @@ import {
   progressRatio,
   type ThemeId,
 } from '../visual/themes.ts'
+import { MixSlider } from './MixSlider.tsx'
 import { NoteHighway } from './NoteHighway.tsx'
 import { useGameSession, type SessionOptions } from './useGameSession.ts'
 import { Waveform } from './Waveform.tsx'
@@ -31,9 +33,13 @@ type SingScreenProps = {
   audioMissing: boolean
   options: SessionOptions
   guideMuted: boolean
+  guideVolume: number
+  micSensitivity: number
   visual: QualitySettings
   themeId: ThemeId
   onToggleGuide: () => void
+  onGuideVolume: (value: number) => void
+  onMicSensitivity: (value: number) => void
   onExit: () => void
   onFinished: (result: RoundResult) => void
 }
@@ -44,20 +50,26 @@ export function SingScreen({
   audioMissing,
   options,
   guideMuted,
+  guideVolume,
+  micSensitivity,
   visual,
   themeId,
   onToggleGuide,
+  onGuideVolume,
+  onMicSensitivity,
   onExit,
   onFinished,
 }: SingScreenProps) {
   const { t } = useI18n()
-  const mic = usePitchDetection()
+  const minRms = rmsGateForSensitivity(micSensitivity)
+  const mic = usePitchDetection(micSensitivity)
   const needMic = !options.simulated
   const live = needMic && mic.status === 'listening' ? mic.live : undefined
   const playback = useSongPlayback(audioUrl)
   const sessionOptions: SessionOptions = {
     ...options,
     getMediaTimeMs: playback.currentTimeMs,
+    minRms,
   }
   const session = useGameSession(song, sessionOptions, live)
   const { timeline, timeMs, status, snapshot } = session
@@ -66,7 +78,7 @@ export function SingScreen({
     timeline,
     timeMs,
     status === 'playing' && !guideMuted,
-    audioUrl ? 0.035 : 0.07,
+    guideGainFor(guideVolume, Boolean(audioUrl), guideMuted),
   )
 
   useEffect(() => {
@@ -111,7 +123,7 @@ export function SingScreen({
     if (note.type === 'freestyle') return false
     if (options.simulated) return true
     if (note.type === 'rap' || note.type === 'goldenRap') {
-      return (live?.rms ?? 0) >= MIC_MIN_RMS
+      return (live?.rms ?? 0) >= minRms
     }
     if (sungMidi === null) return false
     return comparePitchOctaveTolerant(
@@ -186,6 +198,21 @@ export function SingScreen({
           )}
         </div>
       </header>
+
+      <div className="sing-mix">
+        <MixSlider
+          label={t('sing.guideVolume')}
+          value={guideVolume}
+          onChange={onGuideVolume}
+        />
+        {needMic ? (
+          <MixSlider
+            label={t('mic.sensitivity')}
+            value={micSensitivity}
+            onChange={onMicSensitivity}
+          />
+        ) : null}
+      </div>
 
       <section className="sing-stage">
         <p className="sing-track outlined">

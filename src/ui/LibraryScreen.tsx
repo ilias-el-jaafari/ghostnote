@@ -11,6 +11,7 @@ import { parseUltraStar } from '../parser/index.ts'
 import { describeParseError } from './describeParseError.ts'
 import { LanguageSwitcher } from './LanguageSwitcher.tsx'
 import { MicTest } from './MicTest.tsx'
+import { MixSlider } from './MixSlider.tsx'
 import { ThemePicker } from './ThemePicker.tsx'
 import type { ThemeId, ThemePreference } from '../visual/themes.ts'
 
@@ -29,6 +30,10 @@ type LibraryScreenProps = {
   themePreference: ThemePreference
   themeId: ThemeId
   onThemeChange: (next: ThemePreference) => void
+  guideVolume: number
+  micSensitivity: number
+  onGuideVolume: (value: number) => void
+  onMicSensitivity: (value: number) => void
 }
 
 function durationLabel(song: LoadedSong, template: (n: number) => string): string {
@@ -51,6 +56,10 @@ export function LibraryScreen({
   themePreference,
   themeId,
   onThemeChange,
+  guideVolume,
+  micSensitivity,
+  onGuideVolume,
+  onMicSensitivity,
 }: LibraryScreenProps) {
   const { t } = useI18n()
   const filesId = useId()
@@ -221,9 +230,14 @@ export function LibraryScreen({
             themeId={themeId}
             onChange={onThemeChange}
           />
-          <MicTest />
+          <MicTest sensitivity={micSensitivity} onSensitivityChange={onMicSensitivity} />
           {selected ? (
             <div className="start-card hud-panel">
+              <MixSlider
+                label={t('sing.guideVolume')}
+                value={guideVolume}
+                onChange={onGuideVolume}
+              />
               {showSimToggle ? (
                 <label className="sim-toggle">
                   <input

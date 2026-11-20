@@ -107,6 +107,9 @@ export const en = {
   'theme.laser': 'Laser Grid',
   'sing.time': 'Time',
   'sing.player': 'Player {n}',
+  'sing.guideVolume': 'Guide volume',
+  'mic.sensitivity': 'Mic sensitivity',
+  'mic.sensitivityHint': 'Raise this if the tuner only picks you up when you sing loudly.',
 } as const
 
 export type MessageKey = keyof typeof en

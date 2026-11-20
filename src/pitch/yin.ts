@@ -22,11 +22,11 @@ export type PitchDetectorOptions = {
   fallbackThreshold?: number
 }
 
-const DEFAULT_THRESHOLD = 0.1
+const DEFAULT_THRESHOLD = 0.15
 const DEFAULT_MIN_HZ = 80
 const DEFAULT_MAX_HZ = 1000
-const DEFAULT_MIN_RMS = 0.01
-const DEFAULT_FALLBACK = 0.3
+const DEFAULT_MIN_RMS = 0.001
+const DEFAULT_FALLBACK = 0.45
 
 function rmsOf(samples: Float32Array): number {
   let sumSq = 0

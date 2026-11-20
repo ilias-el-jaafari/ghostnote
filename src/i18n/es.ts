@@ -109,4 +109,7 @@ export const es: Record<MessageKey, string> = {
   'theme.laser': 'Laser Grid',
   'sing.time': 'Tiempo',
   'sing.player': 'Jugador {n}',
+  'sing.guideVolume': 'Volumen de la guía',
+  'mic.sensitivity': 'Sensibilidad del micrófono',
+  'mic.sensitivityHint': 'Súbela si el afinador solo te detecta cuando cantas muy alto.',
 }

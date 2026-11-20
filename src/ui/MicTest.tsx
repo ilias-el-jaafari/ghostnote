@@ -4,6 +4,7 @@ import {
   type MicErrorCode,
   type MicStatus,
 } from '../pitch/usePitchDetection.ts'
+import { MixSlider } from './MixSlider.tsx'
 
 function formatHz(frequency: number | null): string {
   if (frequency === null) return '—'
@@ -40,11 +41,16 @@ function errorKey(code: MicErrorCode) {
   }
 }
 
-export function MicTest() {
+type MicTestProps = {
+  sensitivity: number
+  onSensitivityChange: (value: number) => void
+}
+
+export function MicTest({ sensitivity, onSensitivityChange }: MicTestProps) {
   const { t } = useI18n()
-  const { status, errorCode, errorDetail, live, start, stop } = usePitchDetection()
+  const { status, errorCode, errorDetail, live, start, stop } = usePitchDetection(sensitivity)
   const listening = status === 'listening'
-  const level = Math.min(1, live.rms * 8)
+  const level = Math.min(1, live.rms * 24)
   const cents = live.note?.cents ?? 0
   const needle = Math.max(-1, Math.min(1, cents / 50))
   const centsLabel = `${cents >= 0 ? '+' : ''}${cents.toFixed(0)}`
@@ -88,6 +94,13 @@ export function MicTest() {
       ) : (
         <p className="mic-help">{t('mic.help')}</p>
       )}
+
+      <MixSlider
+        label={t('mic.sensitivity')}
+        value={sensitivity}
+        onChange={onSensitivityChange}
+        hint={t('mic.sensitivityHint')}
+      />
 
       {listening ? (
         <button type="button" className="btn btn-danger" onClick={() => void stop()}>

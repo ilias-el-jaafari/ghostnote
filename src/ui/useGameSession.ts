@@ -14,8 +14,9 @@ import {
 } from '../game/index.ts'
 import { simulatedSampleAt } from '../game/index.ts'
 import type { ParsedSong } from '../parser/index.ts'
+import { DEFAULT_MIC_MIN_RMS } from '../audio/mix.ts'
 import { frequencyToMidi } from '../pitch/index.ts'
-import { MIC_MIN_RMS, type LivePitch } from '../pitch/usePitchDetection.ts'
+import { type LivePitch } from '../pitch/usePitchDetection.ts'
 
 export type SessionStatus = 'playing' | 'paused' | 'ended'
 
@@ -39,13 +40,15 @@ export type SessionOptions = {
   seekMs?: number
   /** When the backing track is playing, prefer its currentTime as the game clock. */
   getMediaTimeMs?: () => number | undefined
+  /** RMS gate for mic presence (rap notes). Comes from the sensitivity slider. */
+  minRms?: number
 }
 
-function micSample(live: LivePitch | undefined): SingerSample {
+function micSample(live: LivePitch | undefined, minRms: number): SingerSample {
   const frequency = live?.frequency
   return {
     midi: frequency && frequency > 0 ? frequencyToMidi(frequency) : null,
-    presence: (live?.rms ?? 0) >= MIC_MIN_RMS,
+    presence: (live?.rms ?? 0) >= minRms,
   }
 }
 
@@ -58,7 +61,7 @@ function sampleAt(
   if (options.simulated) {
     return simulatedSampleAt(timeline, timeMs, { noiseCents: options.noiseCents ?? 0 })
   }
-  return micSample(live)
+  return micSample(live, options.minRms ?? DEFAULT_MIC_MIN_RMS)
 }
 
 function applyFrom(

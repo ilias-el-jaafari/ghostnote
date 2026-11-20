@@ -73,6 +73,15 @@ describe('detectPitchYin — pure sines at known frequencies', () => {
     expect(result?.frequency).toBeCloseTo(440, 0)
   })
 
+  it('detects a −30 dBFS sine (quiet singing / soft mic level)', () => {
+    const amplitude = 10 ** (-30 / 20)
+    const result = detect(440, { amplitude })
+    expect(result, 'expected a pitch for a −30 dBFS 440 Hz sine').not.toBeNull()
+    expect(result?.frequency).toBeCloseTo(440, 0)
+    const cents = (frequencyToMidi(result!.frequency) - frequencyToMidi(440)) * 100
+    expect(Math.abs(cents)).toBeLessThan(10)
+  })
+
   it('returns null for silence and near-silence', () => {
     const silence = new Float32Array(8192)
     expect(detectPitchYin(silence, { sampleRate: SAMPLE_RATE })).toBeNull()

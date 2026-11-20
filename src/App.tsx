@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useAudioMix } from './audio/useAudioMix.ts'
 import { APP_NAME } from './config/brand.ts'
 import {
   buildScorePlan,
@@ -65,6 +66,7 @@ export default function App() {
   const [simulated, setSimulated] = useState(flags.sim)
   const [seekMs, setSeekMs] = useState(flags.seekMs)
   const [guideMuted, setGuideMuted] = useState(false)
+  const mix = useAudioMix()
   const songs = useMemo(() => [...builtin, ...userSongs], [builtin, userSongs])
   const selected = songs.find((song) => song.id === selectedId) ?? songs[0]
   const [result, setResult] = useState<RoundResult | undefined>(() =>
@@ -121,9 +123,13 @@ export default function App() {
           audioMissing={selected.audioMissing}
           options={sessionOptions}
           guideMuted={guideMuted}
+          guideVolume={mix.guideVolume}
+          micSensitivity={mix.micSensitivity}
           visual={visual.settings}
           themeId={theme.themeId}
           onToggleGuide={() => setGuideMuted((value) => !value)}
+          onGuideVolume={mix.setGuideVolume}
+          onMicSensitivity={mix.setMicSensitivity}
           onExit={() => setView('home')}
           onFinished={onSingFinished}
         />
@@ -165,6 +171,10 @@ export default function App() {
         themePreference={theme.preference}
         themeId={theme.themeId}
         onThemeChange={theme.setPreference}
+        guideVolume={mix.guideVolume}
+        micSensitivity={mix.micSensitivity}
+        onGuideVolume={mix.setGuideVolume}
+        onMicSensitivity={mix.setMicSensitivity}
       />
     </>
   )
